@@ -1,0 +1,5 @@
+flask>=3.0.0
+requests>=2.31.0
+
+# Optional: enables real AI enrichment (rule-based fallback if absent)
+# anthropic>=0.20.0

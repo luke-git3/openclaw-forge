@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alert Brain — Live Dashboard</title>
+  <style>
+    :root {
+      --bg:       #0f1117;
+      --surface:  #1a1d27;
+      --border:   #2a2d3a;
+      --text:     #e0e4ef;
+      --muted:    #6b7280;
+      --critical: #e53935;
+      --high:     #fb8c00;
+      --medium:   #fdd835;
+      --low:      #43a047;
+      --unknown:  #90a4ae;
+      --accent:   #5865f2;  /* Discord blurple */
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    header h1 span { color: var(--accent); }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--low); display: inline-block; margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    #last-refresh { color: var(--muted); font-size: 12px; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex; gap: 12px; padding: 16px 24px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 20px;
+      min-width: 120px;
+    }
+    .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+    .stat-card.critical .value { color: var(--critical); }
+    .stat-card.high     .value { color: var(--high); }
+    .stat-card.medium   .value { color: var(--medium); }
+    .stat-card.low      .value { color: var(--low); }
+
+    /* ── Alert list ── */
+    .alerts-header {
+      padding: 8px 24px 4px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .alerts-header h2 { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .alert-list { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 8px; }
+
+    .alert-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--unknown);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: start;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .alert-card:hover { background: #22263a; }
+    .alert-card[data-sev="critical"] { border-left-color: var(--critical); }
+    .alert-card[data-sev="high"]     { border-left-color: var(--high); }
+    .alert-card[data-sev="medium"]   { border-left-color: var(--medium); }
+    .alert-card[data-sev="low"]      { border-left-color: var(--low); }
+
+    .sev-badge {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; padding: 3px 8px; border-radius: 4px;
+      white-space: nowrap;
+    }
+    .sev-badge.critical { background: rgba(229,57,53,.2); color: var(--critical); }
+    .sev-badge.high     { background: rgba(251,140,0,.2); color: var(--high); }
+    .sev-badge.medium   { background: rgba(253,216,53,.2); color: var(--medium); }
+    .sev-badge.low      { background: rgba(67,160,71,.2);  color: var(--low); }
+    .sev-badge.unknown  { background: rgba(144,164,174,.2); color: var(--unknown); }
+
+    .alert-body .title { font-weight: 600; font-size: 14px; }
+    .alert-body .summary { color: var(--muted); font-size: 13px; margin-top: 4px; line-height: 1.5; }
+    .alert-body .meta { margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .tag {
+      font-size: 11px; color: var(--muted); background: var(--border);
+      border-radius: 4px; padding: 2px 6px;
+    }
+    .alert-meta-right { text-align: right; font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .alert-meta-right .id { font-family: monospace; font-size: 12px; color: var(--accent); }
+    .action-pill {
+      display: inline-block; margin-top: 4px;
+      font-size: 11px; padding: 2px 6px; border-radius: 4px;
+    }
+    .action-pill.required { background: rgba(251,140,0,.2); color: var(--high); }
+    .action-pill.ok       { background: rgba(67,160,71,.2);  color: var(--low); }
+
+    /* ── Detail panel ── */
+    #detail-panel {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    #detail-panel.open { display: flex; }
+    #detail-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px; max-width: 680px; width: 90%;
+      max-height: 80vh; overflow-y: auto;
+    }
+    #detail-box h3 { font-size: 16px; margin-bottom: 12px; }
+    #detail-raw { font-family: monospace; font-size: 12px; color: var(--muted);
+      white-space: pre-wrap; word-break: break-all; background: var(--bg);
+      padding: 12px; border-radius: 8px; max-height: 50vh; overflow: auto; }
+    #detail-close {
+      float: right; background: none; border: 1px solid var(--border);
+      color: var(--muted); padding: 4px 10px; border-radius: 4px;
+      cursor: pointer; font-size: 12px;
+    }
+    #detail-close:hover { color: var(--text); }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center; padding: 60px 24px; color: var(--muted);
+    }
+    .empty h3 { font-size: 16px; color: var(--text); margin-bottom: 8px; }
+
+    /* ── Mode badges ── */
+    .mode-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; padding: 4px 10px; border-radius: 20px;
+      border: 1px solid var(--border); color: var(--muted);
+    }
+    .mode-ai      { border-color: var(--accent); color: var(--accent); }
+    .mode-discord { border-color: var(--low);    color: var(--low); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🧠 Alert <span>Brain</span></h1>
+  <div style="display:flex;align-items:center;gap:16px">
+    <span id="mode-badges" style="display:flex;gap:8px"></span>
+    <span id="last-refresh"><span class="status-dot"></span>Loading…</span>
+  </div>
+</header>
+
+<div class="stats-bar" id="stats-bar">
+  <div class="stat-card"><div class="label">Total</div><div class="value" id="stat-total">—</div></div>
+  <div class="stat-card critical"><div class="label">Critical</div><div class="value" id="stat-critical">—</div></div>
+  <div class="stat-card high"><div class="label">High</div><div class="value" id="stat-high">—</div></div>
+  <div class="stat-card medium"><div class="label">Medium</div><div class="value" id="stat-medium">—</div></div>
+  <div class="stat-card low"><div class="label">Low</div><div class="value" id="stat-low">—</div></div>
+</div>
+
+<div class="alerts-header">
+  <h2>Recent Alerts</h2>
+  <span id="alert-count" style="font-size:12px;color:var(--muted)"></span>
+</div>
+
+<div class="alert-list" id="alert-list"></div>
+
+<div id="detail-panel">
+  <div id="detail-box">
+    <button id="detail-close">✕ Close</button>
+    <h3 id="detail-title"></h3>
+    <pre id="detail-raw"></pre>
+  </div>
+</div>
+
+<script>
+  const SEV_EMOJI = { critical:"🔴", high:"🟠", medium:"🟡", low:"🟢", unknown:"⚪" };
+  let alerts = [], stats = {};
+
+  async function fetchStats() {
+    try {
+      const r = await fetch('/stats');
+      stats = await r.json();
+    } catch(e) { console.warn('stats fetch failed', e); }
+  }
+
+  async function fetchAlerts() {
+    try {
+      const r = await fetch('/alerts?limit=50');
+      alerts = await r.json();
+    } catch(e) { console.warn('alerts fetch failed', e); }
+  }
+
+  function renderStats() {
+    const s = stats;
+    document.getElementById('stat-total').textContent    = s.total_alerts ?? '—';
+    document.getElementById('stat-critical').textContent = s.severity_counts?.critical ?? 0;
+    document.getElementById('stat-high').textContent     = s.severity_counts?.high ?? 0;
+    document.getElementById('stat-medium').textContent   = s.severity_counts?.medium ?? 0;
+    document.getElementById('stat-low').textContent      = s.severity_counts?.low ?? 0;
+
+    const badges = document.getElementById('mode-badges');
+    badges.innerHTML = '';
+    if (s.ai_mode)      badges.innerHTML += `<span class="mode-badge mode-ai">🧠 AI enrichment</span>`;
+    else                badges.innerHTML += `<span class="mode-badge">📐 Rule-based</span>`;
+    if (s.discord_live) badges.innerHTML += `<span class="mode-badge mode-discord">📣 Discord live</span>`;
+    else                badges.innerHTML += `<span class="mode-badge">🖨️ Discord mock</span>`;
+  }
+
+  function timeAgo(isoStr) {
+    const diff = (Date.now() - new Date(isoStr)) / 1000;
+    if (diff < 60)   return `${Math.round(diff)}s ago`;
+    if (diff < 3600) return `${Math.round(diff/60)}m ago`;
+    return `${Math.round(diff/3600)}h ago`;
+  }
+
+  function renderAlerts() {
+    const list = document.getElementById('alert-list');
+    document.getElementById('alert-count').textContent = `${alerts.length} alerts`;
+
+    if (!alerts.length) {
+      list.innerHTML = `<div class="empty"><h3>No alerts yet</h3>
+        <p>Fire some test events:<br><code>python demo/fire_alerts.py</code></p></div>`;
+      return;
+    }
+
+    list.innerHTML = alerts.map((a, idx) => {
+      const sev     = a.severity || 'unknown';
+      const emoji   = SEV_EMOJI[sev] || '⚪';
+      const tags    = (a.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+      const action  = a.action_required
+        ? `<span class="action-pill required">⚠ Action required</span>`
+        : `<span class="action-pill ok">✓ No action</span>`;
+      const oncall  = a.oncall ? `<span class="tag">📟 on-call</span>` : '';
+      const mode    = a.enrichment_mode === 'ai' ? '🧠 AI' : '📐 Rules';
+
+      return `
+      <div class="alert-card" data-sev="${sev}" data-idx="${idx}">
+        <span class="sev-badge ${sev}">${emoji} ${sev}</span>
+        <div class="alert-body">
+          <div class="title">${a.title || 'Untitled'}</div>
+          <div class="summary">${a.summary || ''}</div>
+          <div class="meta">${tags}${oncall}${action}<span class="tag">${mode}</span><span class="tag">#${a.channel}</span></div>
+        </div>
+        <div class="alert-meta-right">
+          <div class="id">#${a.id}</div>
+          <div style="margin-top:4px">${timeAgo(a.timestamp)}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Click → detail panel
+    list.querySelectorAll('.alert-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const a = alerts[+card.dataset.idx];
+        document.getElementById('detail-title').textContent = `${SEV_EMOJI[a.severity] || ''} ${a.title}`;
+        document.getElementById('detail-raw').textContent   = JSON.stringify(a, null, 2);
+        document.getElementById('detail-panel').classList.add('open');
+      });
+    });
+  }
+
+  document.getElementById('detail-close').addEventListener('click', () => {
+    document.getElementById('detail-panel').classList.remove('open');
+  });
+  document.getElementById('detail-panel').addEventListener('click', e => {
+    if (e.target === document.getElementById('detail-panel'))
+      document.getElementById('detail-panel').classList.remove('open');
+  });
+
+  async function refresh() {
+    await Promise.all([fetchStats(), fetchAlerts()]);
+    renderStats();
+    renderAlerts();
+    document.getElementById('last-refresh').innerHTML =
+      `<span class="status-dot"></span>Updated ${new Date().toLocaleTimeString()}`;
+  }
+
+  // Initial load + poll every 5s
+  refresh();
+  setInterval(refresh, 5000);
+</script>
+</body>
+</html>

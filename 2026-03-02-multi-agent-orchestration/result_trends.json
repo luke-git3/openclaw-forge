@@ -1,0 +1,19 @@
+{
+  "trends": [
+    {
+      "title": "Agentic AI Platform Wars: From Chatbots to Autonomous Digital Workers",
+      "description": "Enterprise software giants are racing to embed autonomous AI agents directly into their platforms, replacing single-turn chatbots with persistent, multi-step agents capable of taking real actions. Salesforce launched its billion-dollar Agentforce initiative embedding autonomous agents inside its CRM, Microsoft released Copilot Agents as digital coworkers across Microsoft 365, and OpenAI launched Frontier in February 2026, an AI agent platform explicitly targeting enterprise SaaS incumbents like Salesforce and Workday. By 2026, an estimated 40% of enterprise apps are projected to run AI agents, fundamentally shifting the enterprise software operating model.",
+      "evidence_url": "https://fortune.com/2026/02/05/openai-frontier-ai-agent-platform-enterprises-challenges-saas-salesforce-workday/"
+    },
+    {
+      "title": "Multi-Agent Orchestration (Swarm) Architectures Replacing Monolithic Automation",
+      "description": "Enterprises are moving from single-model automation to coordinated fleets of specialized agents where a Pricing Agent, Inventory Agent, and Logistics Agent collaborate under an orchestration layer. KPMG Q4 2025 AI Pulse Survey confirmed this shift is the top CIO and CTO priority for 2026, with 67% of executives expecting autonomous decision-making in workflows to be mainstream by 2027 and agentic AI projected to automate nearly a third of risk and compliance operations by that year.",
+      "evidence_url": "https://kpmg.com/us/en/media/news/q4-ai-pulse.html"
+    },
+    {
+      "title": "EU AI Act Enforcement Triggering Enterprise AI Governance Build-Out",
+      "description": "The EU AI Act is rolling out enforcement in phased stages through 2025-2026: prohibitions on social scoring and manipulative AI took effect in early 2025, rules for general-purpose AI models activate in August 2025, and full high-risk AI system compliance infrastructure must be operational by August 2025. This is forcing global enterprises to invest heavily in AI governance, transparency tooling, audit trails, and compliance documentation, creating a fast-growing market for AI governance platforms.",
+      "evidence_url": "https://www.computerworld.com/article/4131303/germany-greenlights-the-eu-ai-act-triggering-countdown-for-enterprise-compliance.html"
+    }
+  ]
+}

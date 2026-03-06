@@ -1,0 +1,34 @@
+{
+  "use_cases": [
+    {
+      "use_case": "AI-Powered Customer Support Automation",
+      "industry": "Technology / SaaS",
+      "roi_claim": "51% average automated resolution rate; Synthesia saved 1,300+ support hours in 6 months with 98.3% self-service rate during a 690% volume spike",
+      "example_company": "Synthesia (via Intercom Fin AI Agent powered by Anthropic Claude)"
+    },
+    {
+      "use_case": "AI Coding Assistant / Developer Productivity",
+      "industry": "Technology / Software Engineering",
+      "roi_claim": "25% of Google new code is AI-assisted; JPMorgan doubled productivity from 3% to 6% with AI tools; GitHub Copilot positive ROI within 3-6 months for most enterprises",
+      "example_company": "Google, JPMorgan Chase"
+    },
+    {
+      "use_case": "Accounts Payable / Invoice Processing Automation",
+      "industry": "Finance / Operations",
+      "roi_claim": "60-70% reduction in processing time; 200-300% ROI in year one; error rates drop from ~2% to 0.3%; up to 90% reduction in AP processing time",
+      "example_company": "Tesorio (AR/AP automation platform), widely adopted across manufacturing and retail"
+    },
+    {
+      "use_case": "Financial Advisor AI Assistant",
+      "industry": "Financial Services / Wealth Management",
+      "roi_claim": "Measurable productivity gains across 15,000+ financial advisors; significant reduction in post-meeting admin time; industry award for productivity enhancement",
+      "example_company": "Morgan Stanley (AI @ Morgan Stanley Debrief, powered by OpenAI)"
+    },
+    {
+      "use_case": "AI-Powered Supplier Negotiation and Payment Optimization",
+      "industry": "Manufacturing / Procurement",
+      "roi_claim": "40% increase in cost savings; $3M recovered in missed early-payment discounts per $1B in orders; fully autonomous payment scheduling",
+      "example_company": "eMoldino (manufacturing supply chain AI platform)"
+    }
+  ]
+}

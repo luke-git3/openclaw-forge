@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "date": "2026-03-02",
+    "name": "Multi-Agent Market Intelligence Orchestrator",
+    "description": "Coordinator agent spawns 4 parallel research sub-agents on different topic angles, collects JSON results, synthesizes a final intelligence report",
+    "category": "Multi-agent orchestration",
+    "status": "working",
+    "takeaway": "Fan-out/fan-in pattern works cleanly in OpenClaw. Key gotcha: sub-agents must use exec+heredoc for file writes (not write tool) at depth 1/2. Parallel spawn cut research time from ~280s to ~70s.",
+    "folder": "/workspace/forge/2026-03-02-multi-agent-orchestration/"
+  },
+  {
+    "date": "2026-03-03",
+    "name": "Alert Brain — AI-Powered Alert Dispatcher",
+    "description": "Flask webhook server that routes any JSON event through Claude for triage (severity, summary, channel routing), persists to JSON store, and dispatches rich embeds to Discord with per-severity channel routing and a live dashboard",
+    "category": "Messaging & notification integrations",
+    "status": "working",
+    "takeaway": "AI-as-middleware is the key pattern: LLM sits between ingestion and action, turning unstructured events into structured routing decisions. Dual AI/rule fallback makes the pipeline resilient. The prompt-for-JSON technique is highly teachable.",
+    "folder": "/workspace/forge/2026-03-03-alert-dispatcher/"
+  },
+  {
+    "date": "2026-03-04",
+    "name": "Pulse — AI Daily Market Briefing Pipeline",
+    "description": "Cron-triggered pipeline that fetches Yahoo Finance prices + RSS news, synthesizes a market briefing with Claude (template fallback if no key), saves timestamped markdown reports, and delivers rich Discord embeds. Includes dark-mode history dashboard and drop-in openclaw-cron.yaml for instant scheduling.",
+    "category": "Cron automation",
+    "status": "working",
+    "takeaway": "AI-as-synthesizer is the reusable pattern: data → LLM → formatted output. The template fallback proves the pipeline is LLM-optional, which is a first-class design principle. State persistence via run_log.json transforms a script into a pipeline. The dashboard + cron config makes this a client-shippable product, not just a code exercise.",
+    "folder": "/workspace/forge/2026-03-04-cron-market-briefing/"
+  },
+  {
+    "date": "2026-03-05",
+    "name": "Sage — Autonomous Web Research Agent",
+    "description": "End-to-end research pipeline: LLM decomposes any topic into sub-questions, parallel search (Brave API / DuckDuckGo fallback), parallel content extraction (requests + BeautifulSoup), cross-source Claude synthesis (executive summary, key findings, Q&A, consensus/conflict analysis), JSON + Markdown output, Flask dashboard to browse reports",
+    "category": "Automated web research agent",
+    "status": "working",
+    "takeaway": "Query decomposition is the research quality multiplier — searching N focused sub-questions beats one broad query every time. The fan-out (parallel search/fetch) + serial synthesis pattern is the correct architecture for I/O-bound agent work. Graceful degradation (LLM → template, Brave → DDG) is non-negotiable for demoable portfolio pieces. The openclaw_demo.py bridge file is a novel tutorial asset — mapping Python pipeline steps to OpenClaw tool calls teaches the framework without needing a live agent.",
+    "folder": "/workspace/forge/2026-03-05-web-research-agent/"
+  },
+  {
+    "date": "2026-03-06",
+    "name": "finsnap — Financial Snapshot OpenClaw Skill",
+    "description": "Complete ClawHub-ready skill package: SKILL.md manifest teaches the agent to fetch Yahoo Finance price/metrics + news (no API key), synthesize AI bull/bear analysis, and deliver rich Discord embeds. Backed by bash fetch scripts, Python orchestrator, clawhub.json publishing manifest, auto-installer, and demo output.",
+    "category": "Skills authoring",
+    "status": "working",
+    "takeaway": "The SKILL.md is not documentation — it is the product. In OpenClaw, the agent instruction layer IS the primary engineering surface; the scripts are implementation detail. The full skill lifecycle (SKILL.md → scripts → clawhub.json → install.sh) is the differentiator that separates skill authors from people who just write Python scripts. Graceful degradation (Anthropic → OpenAI → template; webhook → inline text) is the professional standard. Finance domain encoding in the synthesis prompt (52wk range framing, bull/bear structure, one-word sentiment) shows LLM prompt design maturity.",
+    "folder": "/workspace/forge/2026-03-06-skill-authoring/"
+  }
+]

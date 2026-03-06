@@ -1,0 +1,16 @@
+{
+  "market_size_usd": "$13B in 2024 (enterprise AI platforms, Verdantix); $23.95B in 2024 (enterprise AI broad, Grand View Research); $14.55B in 2024 (intelligent process automation, Grand View Research)",
+  "cagr_percent": 27.7,
+  "year_range": "2024-2030",
+  "top_sources": [
+    "https://www.verdantix.com/venture/report/market-size-and-forecast--enterprise-ai-platforms-2024-2030-global",
+    "https://www.grandviewresearch.com/industry-analysis/enterprise-artificial-intelligence-market-report",
+    "https://www.grandviewresearch.com/industry-analysis/intelligent-process-automation-market",
+    "https://www.grandviewresearch.com/industry-analysis/enterprise-agentic-ai-market-report"
+  ],
+  "key_findings": [
+    "Verdantix values the enterprise AI platform market at $13B in 2024, growing at a 27.7% CAGR to reach $50.3B by 2030, driven by automation appetite and rising AI literacy across enterprises.",
+    "Grand View Research projects the broader enterprise AI market from $23.95B in 2024 to $155.2B by 2030 at a 37.6% CAGR, with cloud adoption and generative AI integration as primary growth catalysts.",
+    "Enterprise agentic AI is the fastest-growing sub-segment at $2.58B in 2024, forecast to hit $24.5B by 2030 at a 46.2% CAGR, reflecting explosive demand for autonomous multi-agent orchestration platforms."
+  ]
+}

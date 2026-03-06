@@ -1,0 +1,34 @@
+{
+  "competitors": [
+    {
+      "name": "Salesforce Agentforce",
+      "positioning": "The leading CRM-native agentic AI platform for enterprise customer engagement and workflow automation, embedded across the world's largest CRM ecosystem",
+      "funding_or_revenue": "$37.9B total FY2025 revenue; Agentforce closed 8,000+ deals (4,000 paid) within months of launch",
+      "differentiator": "Deep CRM data integration with 150,000+ enterprise customers (90% of Fortune 500) gives agents unmatched context for sales, service, and marketing automation out of the box"
+    },
+    {
+      "name": "ServiceNow",
+      "positioning": "Enterprise AI workflow platform that automates IT, HR, finance, and operations through its Now Platform with native agentic AI capabilities",
+      "funding_or_revenue": "$12.84B FY2025 subscription revenue; AI product on track for $1B contracted business by 2026",
+      "differentiator": "Dominant in enterprise ITSM/ITOM with decades of workflow data; Now Assist AI agents operate natively across every enterprise process layer without requiring external integration work"
+    },
+    {
+      "name": "Microsoft Copilot",
+      "positioning": "Ubiquitous enterprise AI assistant embedded across the entire Microsoft 365 and Azure ecosystem — the de facto AI automation layer for enterprises already on Microsoft stack",
+      "funding_or_revenue": "Azure AI growing 157% YoY (mid-2025); contributes multi-billion dollars to Microsoft's $245B+ annual revenue",
+      "differentiator": "Unmatched distribution with 345M+ M365 commercial seats as instant install base; Copilot Studio enables no-code custom agent building on existing Microsoft infrastructure"
+    },
+    {
+      "name": "UiPath",
+      "positioning": "The original RPA-to-agentic-AI automation platform, repositioning as agentic automation where AI agents and software robots collaborate on end-to-end enterprise business processes",
+      "funding_or_revenue": "$1.78B ARR as of Oct 2025 (11% YoY growth); $1.43B annual revenue FY2025 (public, NYSE: PATH)",
+      "differentiator": "15+ years of enterprise process automation DNA; unique ability to combine structured RPA workflows with unstructured agentic AI tasks in a single platform with proven enterprise compliance"
+    },
+    {
+      "name": "Writer",
+      "positioning": "Full-stack enterprise generative AI platform purpose-built for regulated industries — the only enterprise AI with proprietary LLMs, RAG infrastructure, and agentic workflow layer under one roof",
+      "funding_or_revenue": "$326M total raised; $200M Series C at $1.9B valuation (Nov 2024)",
+      "differentiator": "Trains and owns its own LLMs tuned for enterprise use, avoiding OpenAI/Anthropic API dependency — critical for healthcare, financial services, and retail requiring data sovereignty; single-vendor full-stack eliminates multi-tool integration complexity"
+    }
+  ]
+}

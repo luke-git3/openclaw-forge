@@ -1,0 +1,12 @@
+{
+  "tickers": ["SPY", "QQQ", "IWM", "BTC-USD", "GLD", "TLT"],
+  "news_feeds": [
+    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US",
+    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EIXIC&region=US&lang=en-US"
+  ],
+  "headline_limit": 6,
+  "discord_webhook": "",
+  "anthropic_api_key": "",
+  "report_timezone": "America/New_York",
+  "notes": "Set discord_webhook and optionally anthropic_api_key for full functionality. Runs without them in template-synthesis mode."
+}

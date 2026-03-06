@@ -1,0 +1,5 @@
+# Core dependencies (standard library covers the rest)
+requests>=2.28.0
+
+# Optional: enables real Claude AI synthesis
+# anthropic>=0.21.0

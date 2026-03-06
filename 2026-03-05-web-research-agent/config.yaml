@@ -1,0 +1,24 @@
+# config.yaml — Research Agent Configuration
+# ============================================
+# All values can be overridden via environment variables or CLI flags.
+# API keys: set ANTHROPIC_API_KEY and BRAVE_API_KEY env vars, or paste here.
+
+# Research depth: number of sub-questions to generate per topic
+depth: 4
+
+# Search results to fetch per sub-question
+results_per_query: 3
+
+# LLM model for decomposition and synthesis
+# Haiku is fast and cheap; upgrade to claude-3-5-sonnet for higher quality
+llm_model: "claude-3-5-haiku-20241022"
+
+# API keys — prefer env vars over hardcoding
+anthropic_api_key: ""   # or set ANTHROPIC_API_KEY
+brave_api_key: ""       # or set BRAVE_API_KEY (falls back to DuckDuckGo if empty)
+
+# Output directory for reports (absolute or relative to script)
+output_dir: "reports"
+
+# Per-URL fetch timeout in seconds
+fetch_timeout: 10

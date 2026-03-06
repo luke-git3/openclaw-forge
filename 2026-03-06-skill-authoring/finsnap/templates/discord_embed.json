@@ -1,0 +1,34 @@
+{
+  "_comment": "finsnap Discord embed template. Fill placeholders before posting.",
+  "_note": "Color: 0x2ECC71 = bullish green | 0xE74C3C = bearish red | 0x95A5A6 = neutral grey",
+
+  "embeds": [
+    {
+      "title": "{price_emoji} {company_name} ({ticker})",
+      "description": "**${price}** `{change_str}`\n52-wk: ${wk52_low} – ${wk52_high} ({wk52_pct}% of range)",
+      "color": "{embed_color}",
+      "fields": [
+        { "name": "Market Cap", "value": "{market_cap}", "inline": true },
+        { "name": "Trailing P/E", "value": "{trailing_pe}x", "inline": true },
+        { "name": "Forward P/E",  "value": "{forward_pe}x", "inline": true },
+        { "name": "Volume",       "value": "{volume}",      "inline": true },
+        { "name": "Beta",         "value": "{beta}",        "inline": true },
+        { "name": "Market",       "value": "{market_state}","inline": true },
+        {
+          "name": "📰 Recent Headlines",
+          "value": "• {headline_1} — *{publisher_1}*\n• {headline_2} — *{publisher_2}*\n• {headline_3} — *{publisher_3}*",
+          "inline": false
+        },
+        {
+          "name": "💡 AI Analysis",
+          "value": "**Context:** {analysis_context}\n**🐂 Bull:** {bull_case}\n**🐻 Bear:** {bear_case}\n**Verdict:** {sentiment}",
+          "inline": false
+        }
+      ],
+      "footer": {
+        "text": "finsnap • Data ~15min delayed during market hours"
+      },
+      "timestamp": "{iso_timestamp}"
+    }
+  ]
+}

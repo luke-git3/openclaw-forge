@@ -1,0 +1,14 @@
+# Core
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+pyyaml>=6.0.1
+flask>=3.0.0
+
+# LLM (optional — agent degrades gracefully without it)
+anthropic>=0.40.0
+
+# Search backends (Brave needs API key; DDG is free)
+duckduckgo-search>=6.0.0
+
+# For scraping robustness (optional)
+lxml>=5.0.0

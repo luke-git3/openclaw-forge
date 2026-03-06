@@ -1,0 +1,40 @@
+# openclaw-cron.yaml
+# ==================
+# Registers the Pulse pipeline as an OpenClaw scheduled cron job.
+#
+# How to install:
+#   openclaw cron add --file openclaw-cron.yaml
+#
+# How to list all cron jobs:
+#   openclaw cron list
+#
+# How to run manually (one-shot):
+#   openclaw cron run pulse-market-briefing
+#
+# How to remove:
+#   openclaw cron remove pulse-market-briefing
+
+name: pulse-market-briefing
+description: "AI daily market briefing — fetches prices + news, synthesizes with Claude, posts to Discord"
+
+# Runs at 5:15 PM New York time, Monday–Friday (after US equity market close)
+schedule: "15 17 * * 1-5"
+timezone: America/New_York
+
+# Command executed by the cron worker
+command: python3 /workspace/forge/2026-03-04-cron-market-briefing/pipeline.py
+
+# Notify Discord channel on failure (optional)
+notify_on_failure: true
+
+# Environment — set secrets here or in your shell profile
+env:
+  ANTHROPIC_API_KEY: ""      # Optional: enables real Claude synthesis
+  DISCORD_WEBHOOK:   ""      # Optional: enables Discord delivery
+
+# Notes:
+#   - Without ANTHROPIC_API_KEY, the pipeline uses template-based synthesis (still functional)
+#   - Without DISCORD_WEBHOOK, reports are saved locally only
+#   - Reports accumulate in /workspace/forge/2026-03-04-cron-market-briefing/reports/
+#   - View history at: open /workspace/forge/2026-03-04-cron-market-briefing/dashboard/index.html
+#     (after: cd /workspace/forge/2026-03-04-cron-market-briefing && python3 -m http.server 8080)

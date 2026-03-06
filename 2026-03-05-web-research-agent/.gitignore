@@ -1,0 +1,14 @@
+# Generated reports (can be large; regenerate with the agent)
+reports/*.json
+reports/*.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# IDE
+.DS_Store
+.idea/
+*.egg-info/

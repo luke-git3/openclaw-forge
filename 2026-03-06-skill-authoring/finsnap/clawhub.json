@@ -1,0 +1,67 @@
+{
+  "name": "finsnap",
+  "version": "1.0.0",
+  "description": "Real-time financial snapshot for any US stock ticker. Fetches live price, key metrics, and recent news; synthesizes an AI-powered bull/bear analysis; delivers a rich Discord embed. No API key required for data — bring your own LLM key for AI synthesis.",
+  "author": "Luke Stephens",
+  "homepage": "https://github.com/luke-git3/openclaw-forge",
+  "license": "MIT",
+  "keywords": ["finance", "stocks", "discord", "market-data", "ai-synthesis"],
+  "category": "finance",
+  "emoji": "📈",
+  "tags": ["finance", "stocks", "discord", "yahoo-finance", "market-data"],
+
+  "openclaw": {
+    "minVersion": "2026.2.0",
+    "skill": "SKILL.md",
+    "entrypoint": "scripts/finsnap.py"
+  },
+
+  "requires": {
+    "bins": ["bash", "curl", "python3"],
+    "pip": ["requests"],
+    "pip_optional": ["anthropic", "openai"],
+    "env_optional": [
+      "ANTHROPIC_API_KEY",
+      "OPENAI_API_KEY",
+      "DISCORD_WEBHOOK_URL",
+      "FINSNAP_NEWS_COUNT",
+      "FINSNAP_NO_AI"
+    ]
+  },
+
+  "examples": [
+    {
+      "prompt": "What's NVDA trading at?",
+      "description": "Single ticker snapshot with full AI analysis"
+    },
+    {
+      "prompt": "Quick snap on Apple and Microsoft",
+      "description": "Multi-ticker batch with Discord delivery"
+    },
+    {
+      "prompt": "Is Tesla worth buying right now?",
+      "description": "AI bull/bear analysis with sentiment verdict"
+    }
+  ],
+
+  "config_schema": {
+    "DISCORD_WEBHOOK_URL": {
+      "type": "string",
+      "description": "Discord webhook URL for push delivery. Leave blank to output to chat only.",
+      "required": false,
+      "secret": true
+    },
+    "FINSNAP_NEWS_COUNT": {
+      "type": "integer",
+      "description": "Number of news headlines to include (default: 3, max: 10)",
+      "required": false,
+      "default": 3
+    },
+    "FINSNAP_NO_AI": {
+      "type": "boolean",
+      "description": "Set to true to skip AI synthesis and use rule-based analysis only",
+      "required": false,
+      "default": false
+    }
+  }
+}

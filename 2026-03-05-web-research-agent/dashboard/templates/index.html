@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Research Agent — Report Browser</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #a371f7;
+      --tag-bg: #1f2937;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header h1 { font-size: 1.25rem; font-weight: 700; }
+    header .badge {
+      background: var(--accent);
+      color: #0d1117;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+      text-transform: uppercase;
+    }
+    header .subtitle { margin-left: auto; color: var(--muted); font-size: 0.85rem; }
+    main { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .page-title {
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+    }
+    .page-title h2 { font-size: 1.4rem; }
+    .page-title .count { color: var(--muted); font-size: 0.9rem; }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    .empty code {
+      display: block;
+      margin: 1rem auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9rem;
+      width: fit-content;
+    }
+
+    /* Report cards */
+    .report-grid { display: flex; flex-direction: column; gap: 1rem; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.4rem 1.6rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.6rem;
+    }
+    .card-topic { font-size: 1.05rem; font-weight: 600; color: var(--accent); }
+    .card-meta { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+    .card-summary {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 0.9rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .tag {
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 2px 10px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .tag.llm { border-color: var(--purple); color: var(--purple); }
+    .tag.brave { border-color: var(--green); color: var(--green); }
+    .tag.ddg { border-color: var(--yellow); color: var(--yellow); }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.78rem;
+      padding: 2rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🔍 Research Agent</h1>
+  <span class="badge">OpenClaw Forge</span>
+  <span class="subtitle">Automated Web Research Pipeline</span>
+</header>
+
+<main>
+  <div class="page-title">
+    <h2>Research Reports</h2>
+    <span class="count">{{ total }} report{{ 's' if total != 1 else '' }}</span>
+  </div>
+
+  {% if reports %}
+    <div class="report-grid">
+      {% for r in reports %}
+        {% set meta = r.get('meta', {}) %}
+        {% set synthesis = r.get('synthesis', {}) %}
+        <a class="card" href="/report/{{ r.get('id', r.get('_file', '')) }}">
+          <div class="card-header">
+            <span class="card-topic">{{ r.get('topic', 'Untitled') }}</span>
+            <span class="card-meta">
+              {{ meta.get('date', '—') }} &nbsp;·&nbsp;
+              {{ meta.get('source_count', 0) }} sources &nbsp;·&nbsp;
+              {{ meta.get('elapsed_seconds', '?') }}s
+            </span>
+          </div>
+          <p class="card-summary">
+            {{ synthesis.get('executive_summary', 'No summary available.') }}
+          </p>
+          <div class="card-tags">
+            <span class="tag">{{ meta.get('depth', '?') }} sub-questions</span>
+            <span class="tag {{ 'llm' if meta.get('mode') == 'llm' else '' }}">
+              {{ 'LLM synthesis' if meta.get('mode') == 'llm' else 'Template mode' }}
+            </span>
+            <span class="tag {{ 'brave' if meta.get('search_backend') == 'brave' else 'ddg' }}">
+              {{ meta.get('search_backend', 'unknown') }} search
+            </span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <p>No reports yet. Run the research agent to generate one:</p>
+      <code>python research_agent.py "your topic here"</code>
+    </div>
+  {% endif %}
+</main>
+
+<footer>
+  OpenClaw Forge &mdash; <a href="https://github.com/luke-git3/openclaw-forge">GitHub</a>
+  &nbsp;·&nbsp; <a href="/api/reports">JSON API</a>
+</footer>
+
+</body>
+</html>
