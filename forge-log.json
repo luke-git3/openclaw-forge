@@ -43,5 +43,14 @@
     "status": "working",
     "takeaway": "The SKILL.md is not documentation — it is the product. In OpenClaw, the agent instruction layer IS the primary engineering surface; the scripts are implementation detail. The full skill lifecycle (SKILL.md → scripts → clawhub.json → install.sh) is the differentiator that separates skill authors from people who just write Python scripts. Graceful degradation (Anthropic → OpenAI → template; webhook → inline text) is the professional standard. Finance domain encoding in the synthesis prompt (52wk range framing, bull/bear structure, one-word sentiment) shows LLM prompt design maturity.",
     "folder": "/workspace/forge/2026-03-06-skill-authoring/"
+  },
+  {
+    "date": "2026-03-07",
+    "name": "Iris — AI Portfolio Intelligence Dashboard",
+    "description": "Flask REST API backend + dark-mode HTML/JS dashboard showing live portfolio prices (Yahoo Finance), per-position LLM analyst commentary (Claude → template fallback), real-time agent activity feed, and an OpenClaw agent integration layer demonstrating push (Discord embed) and pull (refresh + poll) patterns.",
+    "category": "Client-facing dashboards",
+    "status": "working",
+    "takeaway": "The dashboard is not the product — the API is. A client-facing dashboard in an OpenClaw deployment is the visible layer of an agent pipeline; the REST API (/api/portfolio, /api/refresh/<T>) is what makes it agent-native. Designing the API for agent consumption first (structured JSON, cache invalidation endpoint, agent activity log) is the pattern that separates a demo from a production integration.",
+    "folder": "/workspace/forge/2026-03-07-client-dashboard/"
   }
 ]

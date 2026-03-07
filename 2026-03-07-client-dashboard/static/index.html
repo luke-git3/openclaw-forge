@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iris — AI Portfolio Intelligence</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1c2330;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #7d8590;
+      --accent:    #58a6ff;
+      --green:     #3fb950;
+      --red:       #f85149;
+      --yellow:    #d29922;
+      --purple:    #bc8cff;
+      --orange:    #ffa657;
+      --radius:    10px;
+      --font:      'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────────────────── */
+    .app-shell {
+      display: grid;
+      grid-template-rows: 56px 1fr;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.3px;
+    }
+
+    .topbar-brand .logo {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+
+    .topbar-spacer { flex: 1; }
+
+    .topbar-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .btn-refresh-all {
+      background: var(--accent);
+      color: #0d1117;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-refresh-all:hover { opacity: .85; }
+
+    .main {
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── Summary Cards ────────────────────────────────────────────────────── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .card-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+    .neutral  { color: var(--muted); }
+
+    /* ── Two-column body ─────────────────────────────────────────────────── */
+    .body-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* ── Holdings Table ───────────────────────────────────────────────────── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      margin-bottom: 12px;
+    }
+
+    .holdings-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead tr {
+      background: var(--surface2);
+    }
+
+    th {
+      padding: 11px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    th.right, td.right { text-align: right; }
+
+    td {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tbody tr:hover { background: var(--surface2); }
+
+    .ticker-badge {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--accent);
+      letter-spacing: .3px;
+    }
+
+    .holding-name {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .sector-tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: rgba(88,166,255,.12);
+      color: var(--accent);
+      border: 1px solid rgba(88,166,255,.25);
+      margin-top: 3px;
+    }
+
+    .price-main { font-size: 15px; font-weight: 600; }
+    .price-change { font-size: 12px; margin-top: 2px; }
+
+    .insight-text {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 340px;
+    }
+
+    .btn-mini {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 5px;
+      padding: 4px 9px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-mini:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-mini.spinning { opacity: .5; pointer-events: none; }
+
+    .pnl-bar-wrap {
+      width: 80px;
+      height: 4px;
+      background: var(--surface2);
+      border-radius: 2px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .pnl-bar {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .6s ease;
+    }
+
+    /* ── Agent Feed ───────────────────────────────────────────────────────── */
+    .agent-feed-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .feed-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+    }
+
+    .feed-header-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+    }
+
+    .feed-list {
+      max-height: 520px;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .feed-list::-webkit-scrollbar { width: 4px; }
+    .feed-list::-webkit-scrollbar-track { background: transparent; }
+    .feed-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .feed-item {
+      padding: 8px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(48,54,61,.5);
+    }
+
+    .feed-item:last-child { border-bottom: none; }
+
+    .feed-icon {
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      font-size: 13px;
+    }
+
+    .feed-body { flex: 1; }
+
+    .feed-ts {
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 2px;
+      font-family: monospace;
+    }
+
+    .feed-msg {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    /* ── Loading Skeleton ─────────────────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Toast ────────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+      z-index: 999;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Last updated bar ─────────────────────────────────────────────────── */
+    .last-updated-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      margin-bottom: 12px;
+    }
+
+    .last-updated-text { font-size: 11px; color: var(--muted); }
+
+    .source-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .src-live       { background: rgba(63,185,80,.15);  color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+    .src-simulated  { background: rgba(210,153,34,.15); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); }
+
+    /* ── Responsive ───────────────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .body-grid { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- ── Top Bar ─────────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="logo">🔷</div>
+      Iris
+    </div>
+    <span style="font-size:12px;color:var(--muted)">AI Portfolio Intelligence</span>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Connecting…</span>
+    </div>
+    <button class="btn-refresh-all" onclick="refreshAll()">↻ Refresh All</button>
+  </header>
+
+  <!-- ── Main ───────────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Summary cards -->
+    <div class="summary-grid" id="summaryCards">
+      <div class="card">
+        <div class="card-label">Portfolio Value</div>
+        <div class="card-value" id="sumValue"><span class="skeleton" style="width:120px;height:28px"></span></div>
+        <div class="card-sub" id="sumCost">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Unrealized P&L</div>
+        <div class="card-value" id="sumPnl"><span class="skeleton" style="width:100px;height:28px"></span></div>
+        <div class="card-sub" id="sumPnlPct">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Positions</div>
+        <div class="card-value" id="sumCount"><span class="skeleton" style="width:40px;height:28px"></span></div>
+        <div class="card-sub">across 3 sectors</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Last Refreshed</div>
+        <div class="card-value" style="font-size:18px" id="sumUpdated"><span class="skeleton" style="width:100px;height:20px"></span></div>
+        <div class="card-sub">auto-refresh every 60s</div>
+      </div>
+    </div>
+
+    <!-- Body grid: table + feed -->
+    <div class="body-grid">
+
+      <!-- Holdings table -->
+      <div>
+        <div class="section-title">Holdings</div>
+        <div class="holdings-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticker / Name</th>
+                <th class="right">Shares</th>
+                <th class="right">Price</th>
+                <th class="right">Mkt Value</th>
+                <th class="right">P&L ($)</th>
+                <th class="right">P&L (%)</th>
+                <th>AI Insight</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="holdingsBody">
+              <!-- Skeleton rows -->
+              <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">
+                <span class="skeleton" style="width:200px;height:14px;display:inline-block"></span>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="last-updated-bar">
+          <span class="last-updated-text" id="lastUpdatedBar">Loading…</span>
+          <span id="sourceIndicator" class="source-badge"></span>
+        </div>
+      </div>
+
+      <!-- Agent Activity Feed -->
+      <div>
+        <div class="section-title">Agent Activity Feed</div>
+        <div class="agent-feed-panel">
+          <div class="feed-header">
+            <div class="status-dot"></div>
+            <div class="feed-header-title">Live Events</div>
+          </div>
+          <div class="feed-list" id="feedList">
+            <div class="feed-item">
+              <div class="feed-icon">⏳</div>
+              <div class="feed-body">
+                <div class="feed-ts">—</div>
+                <div class="feed-msg" style="color:var(--muted)">Waiting for agent events…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OpenClaw badge -->
+        <div style="margin-top:12px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:6px">⚡ OpenClaw Integration</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6">
+            This dashboard is the client-facing layer of an OpenClaw pipeline.
+            Agents call <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;color:var(--accent)">/api/refresh/&lt;TICKER&gt;</code> to trigger live refreshes
+            and <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;color:var(--accent)">/api/portfolio</code> to pull structured JSON
+            for downstream tools (Discord embeds, alerts, PDF reports).
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let portfolioData = null;
+  let refreshTimer  = null;
+  const REFRESH_MS  = 60_000; // 60 seconds
+
+  // ── Formatting helpers ─────────────────────────────────────────────────────
+  const fmt$ = (v, dp=2) =>
+    (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:dp,maximumFractionDigits:dp});
+
+  const fmtPct = (v, signed=true) =>
+    (signed && v > 0 ? '+' : '') + v.toFixed(2) + '%';
+
+  const pnlClass = v => v > 0 ? 'positive' : v < 0 ? 'negative' : 'neutral';
+
+  const feedIcon = type => ({ fetch: '📡', ai: '🤖', user: '👤', system: '⚙️' }[type] ?? 'ℹ️');
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  // ── Fetch + Render Portfolio ───────────────────────────────────────────────
+  async function loadPortfolio() {
+    setStatus('loading');
+    try {
+      const res  = await fetch('/api/portfolio');
+      const data = await res.json();
+      portfolioData = data;
+      renderSummary(data.summary);
+      renderHoldings(data.holdings);
+      setStatus('live');
+    } catch (e) {
+      setStatus('error');
+      console.error('Portfolio fetch failed', e);
+    }
+  }
+
+  function renderSummary(s) {
+    document.getElementById('sumValue').textContent   = fmt$(s.total_value, 0);
+    document.getElementById('sumCost').textContent    = `Cost basis: ${fmt$(s.total_cost, 0)}`;
+    document.getElementById('sumPnl').textContent     = fmt$(s.total_pnl, 0);
+    document.getElementById('sumPnl').className       = 'card-value ' + pnlClass(s.total_pnl);
+    document.getElementById('sumPnlPct').textContent  = fmtPct(s.total_pnl_pct);
+    document.getElementById('sumPnlPct').className    = 'card-sub ' + pnlClass(s.total_pnl);
+    document.getElementById('sumCount').textContent   = s.position_count;
+    document.getElementById('sumUpdated').textContent = s.last_updated.split(' ')[1];
+    document.getElementById('lastUpdatedBar').textContent = `Last updated: ${s.last_updated}`;
+  }
+
+  function renderHoldings(holdings) {
+    const tbody = document.getElementById('holdingsBody');
+    tbody.innerHTML = '';
+
+    // Detect data source
+    const sources = [...new Set(holdings.map(h => h.price_source))];
+    const srcEl = document.getElementById('sourceIndicator');
+    if (sources.includes('live')) {
+      srcEl.textContent = '● LIVE';
+      srcEl.className = 'source-badge src-live';
+    } else {
+      srcEl.textContent = '● SIMULATED';
+      srcEl.className = 'source-badge src-simulated';
+    }
+
+    holdings.forEach(h => {
+      const maxPnlPct = 25; // scale bar to ±25%
+      const barW  = Math.min(Math.abs(h.pnl_pct) / maxPnlPct * 100, 100);
+      const barClr = h.pnl_pct >= 0 ? 'var(--green)' : 'var(--red)';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <span class="ticker-badge">${h.ticker}</span>
+          <div class="holding-name">${h.name}</div>
+          <span class="sector-tag">${h.sector}</span>
+        </td>
+        <td class="right">${h.shares.toLocaleString()}</td>
+        <td class="right">
+          <div class="price-main">${fmt$(h.price)}</div>
+          <div class="price-change ${pnlClass(h.change_pct)}">${fmtPct(h.change_pct)}</div>
+        </td>
+        <td class="right">${fmt$(h.market_value, 0)}</td>
+        <td class="right ${pnlClass(h.pnl)}">${fmt$(h.pnl, 0)}</td>
+        <td class="right">
+          <div class="${pnlClass(h.pnl_pct)}">${fmtPct(h.pnl_pct)}</div>
+          <div class="pnl-bar-wrap">
+            <div class="pnl-bar" style="width:${barW}%;background:${barClr}"></div>
+          </div>
+        </td>
+        <td><div class="insight-text">${escHtml(h.insight)}</div></td>
+        <td>
+          <button class="btn-mini" id="btn-${h.ticker}" onclick="refreshTicker('${h.ticker}')">↻</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ── Fetch + Render Agent Feed ──────────────────────────────────────────────
+  async function loadFeed() {
+    try {
+      const res    = await fetch('/api/agent-feed');
+      const data   = await res.json();
+      const events = data.events;
+      const list   = document.getElementById('feedList');
+      list.innerHTML = '';
+
+      if (!events.length) {
+        list.innerHTML = `<div class="feed-item"><div class="feed-icon">⏳</div>
+          <div class="feed-body"><div class="feed-msg" style="color:var(--muted)">No events yet</div></div></div>`;
+        return;
+      }
+
+      events.forEach(ev => {
+        const item = document.createElement('div');
+        item.className = 'feed-item';
+        item.innerHTML = `
+          <div class="feed-icon">${feedIcon(ev.type)}</div>
+          <div class="feed-body">
+            <div class="feed-ts">${ev.ts}</div>
+            <div class="feed-msg">${escHtml(ev.event)}</div>
+          </div>`;
+        list.appendChild(item);
+      });
+    } catch (e) { console.error('Feed fetch failed', e); }
+  }
+
+  // ── Per-ticker refresh ─────────────────────────────────────────────────────
+  async function refreshTicker(ticker) {
+    const btn = document.getElementById(`btn-${ticker}`);
+    btn.classList.add('spinning');
+    btn.textContent = '…';
+    try {
+      await fetch(`/api/refresh/${ticker}`, { method: 'POST' });
+      await loadPortfolio();
+      await loadFeed();
+      showToast(`↻ ${ticker} refreshed`);
+    } finally {
+      btn.classList.remove('spinning');
+      btn.textContent = '↻';
+    }
+  }
+
+  // ── Refresh all ───────────────────────────────────────────────────────────
+  async function refreshAll() {
+    await loadPortfolio();
+    await loadFeed();
+    showToast('Portfolio refreshed');
+    resetTimer();
+  }
+
+  // ── Auto-refresh timer ────────────────────────────────────────────────────
+  function resetTimer() {
+    clearInterval(refreshTimer);
+    refreshTimer = setInterval(refreshAll, REFRESH_MS);
+  }
+
+  // ── Status indicator ──────────────────────────────────────────────────────
+  function setStatus(state) {
+    const dot  = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    const map  = {
+      loading: ['var(--yellow)', 'Fetching…'],
+      live:    ['var(--green)',  'Live'],
+      error:   ['var(--red)',    'Error'],
+    };
+    const [color, label] = map[state] || map.live;
+    dot.style.background   = color;
+    dot.style.boxShadow    = `0 0 6px ${color}`;
+    text.textContent       = label;
+  }
+
+  // ── Utility ───────────────────────────────────────────────────────────────
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  // ── Bootstrap ────────────────────────────────────────────────────────────
+  (async () => {
+    await Promise.all([loadPortfolio(), loadFeed()]);
+    resetTimer();
+    // Poll agent feed every 15s
+    setInterval(loadFeed, 15_000);
+  })();
+</script>
+
+</body>
+</html>
