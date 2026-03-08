@@ -52,5 +52,14 @@
     "status": "working",
     "takeaway": "The dashboard is not the product — the API is. A client-facing dashboard in an OpenClaw deployment is the visible layer of an agent pipeline; the REST API (/api/portfolio, /api/refresh/<T>) is what makes it agent-native. Designing the API for agent consumption first (structured JSON, cache invalidation endpoint, agent activity log) is the pattern that separates a demo from a production integration.",
     "folder": "/workspace/forge/2026-03-07-client-dashboard/"
+  },
+  {
+    "date": "2026-03-08",
+    "name": "Mnemosyne — Persistent Memory & Context Injection Agent",
+    "description": "SQLite-backed memory store with TF-IDF semantic search (no API needed), importance + recency scoring, full context injection pipeline, Flask REST API, dark-mode dashboard with search/chat/add tabs, and an OpenClaw tool mapping bridge for teaching. 18 realistic seed memories. Template fallback active without API key.",
+    "category": "Persistent memory & context injection",
+    "status": "working",
+    "takeaway": "The context block is the product. The memory store is plumbing, the semantic search is routing — what matters is the formatted [MEMORY CONTEXT] block that lands in the LLM prompt. TF-IDF from scratch (no sklearn) works well for factual memories and signals math comfort. The injected_prompt field in the API response is the killer teaching feature: it makes the invisible visible. The openclaw_agent.py bridge (Python function → OpenClaw tool call mapping) is the pattern that should appear in every Forge build going forward.",
+    "folder": "/workspace/forge/2026-03-08-persistent-memory/"
   }
 ]

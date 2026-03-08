@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mnemosyne — Persistent Memory Agent</title>
+  <style>
+    /* ── Reset & Base ────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --surface2: #21262d;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --accent:   #58a6ff;
+      --green:    #3fb950;
+      --yellow:   #d29922;
+      --red:      #f85149;
+      --purple:   #bc8cff;
+      --orange:   #ffa657;
+      --radius:   8px;
+      --font:     'SF Mono', 'Consolas', 'Menlo', monospace;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 20px; font-weight: 700; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+    .badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2px 10px;
+      font-size: 11px;
+      color: var(--accent);
+      font-family: var(--font);
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 0;
+      height: calc(100vh - 57px);
+    }
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Tabs ────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      padding: 0 16px;
+    }
+    .tab {
+      padding: 12px 16px;
+      cursor: pointer;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .tab:hover:not(.active) { color: var(--text); }
+    .tab-content { display: none; flex: 1; overflow-y: auto; padding: 20px; }
+    .tab-content.active { display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── Cards & Panels ──────────────────────────────────────────── */
+    .card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .card h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    /* ── Stats Row ───────────────────────────────────────────────── */
+    .stats-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .stat {
+      flex: 1;
+      text-align: center;
+    }
+    .stat .val { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .stat .lbl { font-size: 11px; color: var(--muted); }
+
+    /* ── Memory List (sidebar) ────────────────────────────────────── */
+    .mem-list { padding: 8px; flex: 1; overflow-y: auto; }
+    .mem-item {
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      margin-bottom: 4px;
+      transition: background 0.1s;
+    }
+    .mem-item:hover { background: var(--surface2); border-color: var(--border); }
+    .mem-item.selected { background: #1c2a3a; border-color: var(--accent); }
+    .mem-content {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .mem-meta {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .imp-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+    .tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1px 6px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .source-badge {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: var(--font);
+    }
+
+    /* ── Forms ───────────────────────────────────────────────────── */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 12px; color: var(--muted); font-weight: 500; }
+    input, textarea, select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 80px; }
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
+    button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1117;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover { background: #79c0ff; }
+    .btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
+    .btn-danger:hover { background: #2a1a1a; }
+    .btn-secondary { background: var(--surface2); color: var(--text); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-green { background: var(--green); color: #0d1117; border-color: var(--green); }
+    .btn-row { display: flex; gap: 8px; }
+
+    /* ── Search Results ──────────────────────────────────────────── */
+    .result-item {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      background: var(--bg);
+    }
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .rank-badge {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0d1117;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .score-bar-wrap { flex: 1; height: 4px; background: var(--border); border-radius: 2px; }
+    .score-bar { height: 100%; background: var(--accent); border-radius: 2px; }
+    .score-label { font-size: 11px; color: var(--muted); font-family: var(--font); }
+
+    /* ── Chat Interface ───────────────────────────────────────────── */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .msg { max-width: 80%; }
+    .msg.user { align-self: flex-end; }
+    .msg.agent { align-self: flex-start; }
+    .msg-bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .msg.user .msg-bubble { background: var(--accent); color: #0d1117; border-radius: 12px 12px 2px 12px; }
+    .msg.agent .msg-bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px 12px 12px 2px; }
+    .msg-meta { font-size: 11px; color: var(--muted); margin-top: 4px; padding: 0 4px; }
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .chat-input-row input { flex: 1; }
+
+    /* ── Context Block ───────────────────────────────────────────── */
+    .context-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: var(--font);
+      font-size: 11px;
+      color: var(--muted);
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .context-block .highlight { color: var(--accent); }
+
+    /* ── Importance colors ───────────────────────────────────────── */
+    .imp-9, .imp-10 { background: var(--red); }
+    .imp-7, .imp-8  { background: var(--orange); }
+    .imp-4, .imp-5, .imp-6 { background: var(--yellow); }
+    .imp-1, .imp-2, .imp-3 { background: var(--muted); }
+
+    /* ── Misc ────────────────────────────────────────────────────── */
+    .empty-state { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 13px; }
+    .alert { padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 8px; }
+    .alert-success { background: #0d2818; border: 1px solid var(--green); color: var(--green); }
+    .alert-error   { background: #2a1a1a; border: 1px solid var(--red);   color: var(--red); }
+    .spin { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sidebar-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sidebar-header span { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .filter-row { display: flex; gap: 6px; padding: 8px; }
+    .filter-row input { font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────── -->
+<header>
+  <div>
+    <h1>🧠 Mnemosyne</h1>
+    <div class="subtitle">Persistent Memory &amp; Context Injection Agent</div>
+  </div>
+  <span class="badge">OpenClaw Forge #7</span>
+  <span class="badge" id="model-badge">model: –</span>
+</header>
+
+<!-- ── Layout ─────────────────────────────────────────────────────────── -->
+<div class="container">
+
+  <!-- ── Sidebar: Memory Store ─────────────────────────────────────── -->
+  <div class="sidebar">
+    <div class="stats-row" id="stats-row">
+      <div class="stat"><div class="val" id="stat-total">–</div><div class="lbl">Memories</div></div>
+      <div class="stat"><div class="val" id="stat-agent">–</div><div class="lbl">Agent</div></div>
+      <div class="stat"><div class="val" id="stat-user">–</div><div class="lbl">User</div></div>
+    </div>
+
+    <div class="sidebar-header">
+      <span>Memory Store</span>
+      <button class="btn-secondary" style="padding:4px 10px;font-size:11px" onclick="seedMemories()">🌱 Seed Demo</button>
+    </div>
+
+    <div class="filter-row">
+      <input type="text" id="sidebar-filter" placeholder="Filter memories…" oninput="filterMemories(this.value)" />
+    </div>
+
+    <div class="mem-list" id="mem-list">
+      <div class="empty-state">No memories yet.<br>Seed demo data or add memories via the form.</div>
+    </div>
+  </div>
+
+  <!-- ── Main Panel ────────────────────────────────────────────────── -->
+  <div class="main">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('search')">🔍 Search</div>
+      <div class="tab" onclick="switchTab('chat')">💬 Chat</div>
+      <div class="tab" onclick="switchTab('add')">➕ Add Memory</div>
+    </div>
+
+    <!-- Search Tab -->
+    <div class="tab-content active" id="tab-search">
+      <div class="card">
+        <h3>Semantic Search</h3>
+        <div class="form-group">
+          <input type="text" id="search-query" placeholder="Search memories… (e.g. 'What are Luke's career goals?')" onkeydown="if(event.key==='Enter')runSearch()" />
+        </div>
+        <div class="form-row" style="margin-top:10px">
+          <div class="form-group">
+            <label>Max Results</label>
+            <select id="search-topk">
+              <option value="3">3</option>
+              <option value="5" selected>5</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tag Filter (optional)</label>
+            <input type="text" id="search-tag" placeholder="e.g. finance" />
+          </div>
+          <div class="form-group" style="justify-content:flex-end">
+            <label>&nbsp;</label>
+            <button class="btn-primary" onclick="runSearch()">Search</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="search-results"></div>
+
+      <div class="card" id="context-card" style="display:none">
+        <h3>💉 Injected Context Block</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">
+          This is the exact text injected into the LLM prompt before your query.
+          This is how OpenClaw's <code>memory_search</code> + <code>memory_get</code> pattern works.
+        </p>
+        <div class="context-block" id="context-display"></div>
+      </div>
+    </div>
+
+    <!-- Chat Tab -->
+    <div class="tab-content" id="tab-chat">
+      <div class="chat-messages" id="chat-messages">
+        <div class="empty-state">
+          Ask anything — I'll search memories and respond with context.<br>
+          <small style="color:var(--muted)">Try: "What do you know about my career goals?" or "Do I prefer dark mode?"</small>
+        </div>
+      </div>
+      <div id="last-memories-used" style="padding:8px 16px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);background:var(--surface);display:none">
+        Memories used: <span id="mem-used-count">0</span> · Model: <span id="mem-used-model">–</span>
+        <span id="view-prompt-btn" style="cursor:pointer;color:var(--accent);margin-left:8px" onclick="togglePromptView()">▶ view injected prompt</span>
+      </div>
+      <div id="prompt-viewer" style="display:none;padding:8px 16px;border-top:1px solid var(--border)">
+        <div class="context-block" id="last-prompt" style="max-height:160px"></div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Message Mnemosyne…" onkeydown="if(event.key==='Enter')sendChat()" />
+        <button class="btn-primary" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+
+    <!-- Add Memory Tab -->
+    <div class="tab-content" id="tab-add">
+      <div class="card">
+        <h3>Add New Memory</h3>
+        <div id="add-alert"></div>
+        <div class="form-group">
+          <label>Memory Content *</label>
+          <textarea id="add-content" placeholder="e.g. 'User prefers responses under 200 words unless asked for depth'" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tags (comma-separated)</label>
+            <input type="text" id="add-tags" placeholder="e.g. preference, communication" />
+          </div>
+          <div class="form-group">
+            <label>Source</label>
+            <select id="add-source">
+              <option value="user">user</option>
+              <option value="agent">agent</option>
+              <option value="system">system</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Importance (1–10)</label>
+            <input type="number" id="add-importance" value="5" min="1" max="10" />
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn-primary" onclick="addMemory()">Save Memory</button>
+          <button class="btn-secondary" onclick="clearAddForm()">Clear</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Importance Guide</h3>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+          <div><span style="color:var(--red);font-weight:700">9–10 Critical</span> — Core identity, must-always-surface facts (name, role, goals)</div>
+          <div><span style="color:var(--orange);font-weight:700">7–8 High</span> — Strong preferences, active projects, key context</div>
+          <div><span style="color:var(--yellow);font-weight:700">4–6 Medium</span> — Useful background, tools, soft preferences</div>
+          <div><span style="color:var(--muted);font-weight:700">1–3 Low</span> — Nice-to-know, rarely decisive</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────
+let allMemories = [];
+let selectedMemoryId = null;
+
+// ── Init ─────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadMemories();
+  loadStats();
+});
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const tabs = ['search', 'chat', 'add'];
+    t.classList.toggle('active', tabs[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => {
+    c.classList.toggle('active', c.id === `tab-${name}`);
+  });
+}
+
+// ── Memory List ───────────────────────────────────────────────────────────
+async function loadMemories(tag = '') {
+  const url = tag ? `/api/memories?tag=${encodeURIComponent(tag)}` : '/api/memories';
+  const data = await fetch(url).then(r => r.json());
+  allMemories = data.memories || [];
+  renderMemoryList(allMemories);
+}
+
+function renderMemoryList(memories) {
+  const el = document.getElementById('mem-list');
+  if (!memories.length) {
+    el.innerHTML = '<div class="empty-state">No memories.<br>Use 🌱 Seed Demo to get started.</div>';
+    return;
+  }
+  el.innerHTML = memories.map(m => `
+    <div class="mem-item ${m.id === selectedMemoryId ? 'selected' : ''}" onclick="selectMemory('${m.id}')">
+      <div style="display:flex;gap:6px;align-items:flex-start">
+        <div class="imp-dot imp-${m.importance}" style="margin-top:4px"></div>
+        <div class="mem-content">${escHtml(m.content)}</div>
+      </div>
+      <div class="mem-meta">
+        <span class="source-badge">${m.source}</span>
+        ${(m.tags || []).map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterMemories(query) {
+  if (!query.trim()) { renderMemoryList(allMemories); return; }
+  const q = query.toLowerCase();
+  renderMemoryList(allMemories.filter(m =>
+    m.content.toLowerCase().includes(q) ||
+    (m.tags || []).some(t => t.toLowerCase().includes(q)) ||
+    m.source.toLowerCase().includes(q)
+  ));
+}
+
+function selectMemory(id) {
+  selectedMemoryId = id;
+  renderMemoryList(allMemories.filter(m =>
+    document.getElementById('sidebar-filter').value
+      ? m.content.toLowerCase().includes(document.getElementById('sidebar-filter').value.toLowerCase())
+      : true
+  ));
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+async function loadStats() {
+  const data = await fetch('/api/stats').then(r => r.json());
+  document.getElementById('stat-total').textContent = data.total || 0;
+  document.getElementById('stat-agent').textContent = (data.by_source || {}).agent || 0;
+  document.getElementById('stat-user').textContent = (data.by_source || {}).user || 0;
+}
+
+// ── Semantic Search ───────────────────────────────────────────────────────
+async function runSearch() {
+  const query = document.getElementById('search-query').value.trim();
+  if (!query) return;
+  const topK = document.getElementById('search-topk').value;
+  const tag = document.getElementById('search-tag').value.trim();
+
+  const resultsEl = document.getElementById('search-results');
+  resultsEl.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0"><span class="spin">⟳</span> Searching…</div>';
+
+  const params = new URLSearchParams({ q: query, top_k: topK });
+  if (tag) params.set('tag', tag);
+
+  const data = await fetch(`/api/search?${params}`).then(r => r.json());
+
+  if (data.error) {
+    resultsEl.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+    return;
+  }
+
+  if (!data.results.length) {
+    resultsEl.innerHTML = '<div class="empty-state">No matching memories found. Try a different query or add more memories.</div>';
+    document.getElementById('context-card').style.display = 'none';
+    return;
+  }
+
+  resultsEl.innerHTML = data.results.map(r => `
+    <div class="result-item">
+      <div class="result-header">
+        <div class="rank-badge">${r._rank}</div>
+        <div class="score-bar-wrap"><div class="score-bar" style="width:${Math.min(r._score * 200, 100)}%"></div></div>
+        <div class="score-label">score: ${r._score}</div>
+        <div class="imp-dot imp-${r.importance}" style="margin-left:4px"></div>
+        <span style="font-size:11px;color:var(--muted)">imp:${r.importance}</span>
+      </div>
+      <div style="font-size:13px;margin-bottom:6px">${escHtml(r.content)}</div>
+      <div class="mem-meta">
+        <span class="source-badge">${r.source}</span>
+        ${(r.tags || []).map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}
+        <span style="font-size:10px;color:var(--muted);margin-left:auto">accessed ${r.access_count}x</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Show context block
+  const ctxCard = document.getElementById('context-card');
+  ctxCard.style.display = 'flex';
+  document.getElementById('context-display').textContent = data.context_block;
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = '';
+
+  const messagesEl = document.getElementById('chat-messages');
+
+  // Clear empty state
+  const empty = messagesEl.querySelector('.empty-state');
+  if (empty) empty.remove();
+
+  // Add user message
+  messagesEl.innerHTML += `
+    <div class="msg user">
+      <div class="msg-bubble">${escHtml(message)}</div>
+    </div>`;
+
+  // Typing indicator
+  const typingId = 'typing-' + Date.now();
+  messagesEl.innerHTML += `<div class="msg agent" id="${typingId}"><div class="msg-bubble" style="color:var(--muted)"><span class="spin">⟳</span> Retrieving memories…</div></div>`;
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  try {
+    const data = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message })
+    }).then(r => r.json());
+
+    document.getElementById(typingId)?.remove();
+
+    const memLabel = data.memory_count === 1 ? '1 memory' : `${data.memory_count} memories`;
+    messagesEl.innerHTML += `
+      <div class="msg agent">
+        <div class="msg-bubble">${escHtml(data.response)}</div>
+        <div class="msg-meta">🧠 ${memLabel} injected · ${data.model}</div>
+      </div>`;
+
+    // Update footer bar
+    const footerEl = document.getElementById('last-memories-used');
+    footerEl.style.display = 'block';
+    document.getElementById('mem-used-count').textContent = data.memory_count;
+    document.getElementById('mem-used-model').textContent = data.model;
+    document.getElementById('last-prompt').textContent = data.injected_prompt;
+    document.getElementById('model-badge').textContent = `model: ${data.model}`;
+
+  } catch(e) {
+    document.getElementById(typingId)?.remove();
+    messagesEl.innerHTML += `<div class="msg agent"><div class="msg-bubble" style="color:var(--red)">Error: ${escHtml(e.message)}</div></div>`;
+  }
+
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  loadStats();
+}
+
+function togglePromptView() {
+  const el = document.getElementById('prompt-viewer');
+  const btn = document.getElementById('view-prompt-btn');
+  const visible = el.style.display !== 'none';
+  el.style.display = visible ? 'none' : 'block';
+  btn.textContent = (visible ? '▶' : '▼') + ' view injected prompt';
+}
+
+// ── Add Memory ────────────────────────────────────────────────────────────
+async function addMemory() {
+  const content = document.getElementById('add-content').value.trim();
+  if (!content) { showAddAlert('Content is required', false); return; }
+
+  const data = await fetch('/api/memories', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      content,
+      tags: document.getElementById('add-tags').value,
+      source: document.getElementById('add-source').value,
+      importance: parseInt(document.getElementById('add-importance').value),
+    })
+  }).then(r => r.json());
+
+  if (data.error) { showAddAlert(data.error, false); return; }
+  showAddAlert('Memory saved!', true);
+  clearAddForm();
+  loadMemories();
+  loadStats();
+}
+
+function clearAddForm() {
+  document.getElementById('add-content').value = '';
+  document.getElementById('add-tags').value = '';
+  document.getElementById('add-importance').value = '5';
+  document.getElementById('add-source').value = 'user';
+}
+
+function showAddAlert(msg, success) {
+  const el = document.getElementById('add-alert');
+  el.innerHTML = `<div class="alert ${success ? 'alert-success' : 'alert-error'}">${escHtml(msg)}</div>`;
+  setTimeout(() => el.innerHTML = '', 3000);
+}
+
+// ── Seed ──────────────────────────────────────────────────────────────────
+async function seedMemories() {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⟳ Seeding…';
+  const data = await fetch('/api/seed', { method: 'POST' }).then(r => r.json());
+  btn.textContent = `✅ ${data.seeded} seeded`;
+  setTimeout(() => { btn.textContent = '🌱 Seed Demo'; btn.disabled = false; }, 3000);
+  loadMemories();
+  loadStats();
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
