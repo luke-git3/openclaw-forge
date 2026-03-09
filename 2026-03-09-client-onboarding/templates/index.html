@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intake — AI Client Onboarding</title>
+<style>
+  :root {
+    --bg:      #0d1117;
+    --surface: #161b22;
+    --border:  #30363d;
+    --accent:  #5865f2;
+    --accent2: #57f287;
+    --warn:    #fee75c;
+    --danger:  #ed4245;
+    --text:    #e6edf3;
+    --muted:   #8b949e;
+    --radius:  8px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  /* ── Nav ── */
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; gap: 1.5rem; height: 56px; }
+  nav .logo { font-weight: 700; font-size: 1.1rem; color: var(--accent); letter-spacing: -.5px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: .9rem; transition: color .15s; }
+  nav a:hover, nav a.active { color: var(--text); }
+  nav .spacer { flex: 1; }
+  nav .badge { background: var(--accent); color: #fff; font-size: .7rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+
+  /* ── Layout ── */
+  main { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+  h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .35rem; }
+  h2 { font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem; color: var(--text); }
+  .subtitle { color: var(--muted); font-size: .9rem; margin-bottom: 2rem; }
+
+  /* ── Cards ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .card-title { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .75rem; }
+
+  /* ── Form ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: .4rem; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: .82rem; color: var(--muted); font-weight: 500; }
+  input, select, textarea {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text); font-size: .9rem; padding: .55rem .75rem;
+    transition: border-color .15s; outline: none; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  select option { background: var(--surface); }
+
+  /* ── Buttons ── */
+  .btn { display: inline-flex; align-items: center; gap: .4rem; font-size: .9rem; font-weight: 600;
+    padding: .6rem 1.25rem; border-radius: var(--radius); border: none; cursor: pointer; transition: opacity .15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-success { background: var(--accent2); color: #0d1117; }
+  .btn-muted { background: var(--border); color: var(--text); }
+  .btn:hover { opacity: .85; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── Status pills ── */
+  .pill { display: inline-block; font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+  .pill-green { background: rgba(87,242,135,.15); color: var(--accent2); }
+  .pill-yellow { background: rgba(254,231,92,.15); color: var(--warn); }
+  .pill-blue { background: rgba(88,101,242,.2); color: #a5b4fc; }
+
+  /* ── Progress / spinner ── */
+  #progress-wrap { display: none; text-align: center; padding: 2.5rem; }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Result panel ── */
+  #result-panel { display: none; }
+  .step-row { display: flex; align-items: center; gap: .6rem; font-size: .88rem; padding: .35rem 0; }
+  .step-icon { font-size: 1rem; width: 1.5rem; text-align: center; }
+
+  /* ── Dashboard table ── */
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: .78rem; text-transform: uppercase;
+    letter-spacing: .06em; padding: .5rem .75rem; border-bottom: 1px solid var(--border); }
+  td { padding: .65rem .75rem; border-bottom: 1px solid rgba(48,54,61,.5); vertical-align: top; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  .link { color: var(--accent); text-decoration: none; }
+  .link:hover { text-decoration: underline; }
+
+  /* ── Detail view ── */
+  .doc-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab-btn { background: var(--border); border: none; color: var(--muted); font-size: .85rem; padding: .4rem .9rem;
+    border-radius: var(--radius); cursor: pointer; transition: all .15s; }
+  .tab-btn.active { background: var(--accent); color: #fff; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+  pre { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1rem; overflow-x: auto; font-size: .82rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .75rem; }
+  .meta-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: .75rem 1rem; }
+  .meta-label { font-size: .72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .25rem; }
+  .meta-value { font-size: .88rem; }
+
+  /* ── Config tree ── */
+  .config-section { margin-bottom: 1rem; }
+  .config-key { font-size: .78rem; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-bottom: .4rem; }
+  .config-val { font-size: .88rem; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .tag { background: rgba(88,101,242,.15); color: #a5b4fc; font-size: .78rem; padding: 2px 8px; border-radius: 99px; }
+  .cron-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: .65rem .9rem; margin-bottom: .5rem; font-size: .84rem; }
+  .cron-schedule { font-family: monospace; color: var(--warn); font-size: .8rem; }
+
+  /* ── Empty state ── */
+  .empty-state { text-align: center; padding: 4rem 1rem; color: var(--muted); }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+  /* ── Alerts ── */
+  .alert { padding: .75rem 1rem; border-radius: var(--radius); font-size: .88rem; margin-bottom: 1rem; }
+  .alert-info { background: rgba(88,101,242,.1); border: 1px solid rgba(88,101,242,.3); color: #a5b4fc; }
+  .alert-success { background: rgba(87,242,135,.1); border: 1px solid rgba(87,242,135,.3); color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">⚡ Intake</span>
+  <a href="/" {% if page == 'form' %}class="active"{% endif %}>New Client</a>
+  <a href="/dashboard" {% if page == 'dashboard' or page == 'detail' %}class="active"{% endif %}>Dashboard</a>
+  <span class="spacer"></span>
+  <span class="badge">OpenClaw Demo</span>
+</nav>
+
+<main>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     INTAKE FORM
+═══════════════════════════════════════════════════════════════════ -->
+{% if page == 'form' %}
+<h1>Client Onboarding</h1>
+<p class="subtitle">Fill out the intake form — the AI engine generates a welcome letter, agent config, and 30-day checklist automatically.</p>
+
+<div class="alert alert-info">
+  💡 <strong>How this works:</strong> Submit the form → Claude generates three personalized documents → agent config written to registry → Discord notification fired → client record saved.
+</div>
+
+<form id="intake-form">
+  <div class="card">
+    <div class="card-title">Contact Information</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Contact Name *</label>
+        <input type="text" name="contact_name" placeholder="Sarah Chen" required>
+      </div>
+      <div class="form-group">
+        <label>Company Name *</label>
+        <input type="text" name="company_name" placeholder="Acme Corp" required>
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" name="email" placeholder="sarah@acme.com" required>
+      </div>
+      <div class="form-group">
+        <label>Industry *</label>
+        <select name="industry" required>
+          <option value="">Select industry…</option>
+          <option>Financial Services</option>
+          <option>Software / SaaS</option>
+          <option>Healthcare</option>
+          <option>E-Commerce / Retail</option>
+          <option>Legal</option>
+          <option>Marketing / Media</option>
+          <option>Real Estate</option>
+          <option>Consulting</option>
+          <option>Manufacturing</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Team & Technical Context</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Team Size *</label>
+        <select name="team_size" required>
+          <option value="">Select size…</option>
+          <option>1–10</option>
+          <option>11–50</option>
+          <option>51–200</option>
+          <option>201–500</option>
+          <option>500+</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Preferred Comms Channel *</label>
+        <select name="comms_channel" required>
+          <option value="">Select channel…</option>
+          <option>Discord</option>
+          <option>Slack</option>
+          <option>Telegram</option>
+          <option>Email</option>
+          <option>Microsoft Teams</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Current Tech Stack</label>
+        <input type="text" name="tech_stack" placeholder="Python, Salesforce, GitHub, Slack…">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Use Case & Goals</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Primary Use Case *</label>
+        <input type="text" name="use_case" placeholder="Automated daily market intelligence briefing for investment team" required>
+      </div>
+      <div class="form-group full">
+        <label>Goals & Success Metrics *</label>
+        <textarea name="goals" placeholder="Save 2 hours per analyst per day; surface opportunities before market open; reduce manual research by 80%" required></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div id="progress-wrap">
+    <div class="spinner"></div>
+    <p style="color: var(--muted); font-size: .9rem;">Running onboarding pipeline… generating welcome letter, agent config, and 30-day checklist…</p>
+  </div>
+
+  <div id="result-panel">
+    <div class="card" style="border-color: var(--accent2);">
+      <div class="card-title">✅ Onboarding Complete</div>
+      <div id="step-list"></div>
+      <div style="margin-top: 1rem; display: flex; gap: .75rem; flex-wrap: wrap;">
+        <a id="detail-link" href="#" class="btn btn-primary">View Full Profile →</a>
+        <button type="button" onclick="resetForm()" class="btn btn-muted">Onboard Another Client</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="form-submit-row" style="margin-top: 1rem;">
+    <button type="submit" class="btn btn-primary">
+      ⚡ Run Onboarding Pipeline
+    </button>
+  </div>
+</form>
+
+<script>
+document.getElementById('intake-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById('form-submit-row');
+  const progress = document.getElementById('progress-wrap');
+  const result = document.getElementById('result-panel');
+
+  btn.style.display = 'none';
+  progress.style.display = 'block';
+
+  const data = Object.fromEntries(new FormData(form));
+  try {
+    const resp = await fetch('/onboard', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data),
+    });
+    const json = await resp.json();
+    if (!resp.ok) throw new Error(json.error || 'Unknown error');
+
+    progress.style.display = 'none';
+    result.style.display = 'block';
+
+    const ai = json.ai_used || {};
+    const steps = [
+      { icon: '💾', label: `Client record saved`, detail: `ID: ${json.client_id}` },
+      { icon: '✉️',  label: `Welcome letter generated`, detail: ai.welcome_letter ? '✨ AI-powered' : '📄 Template' },
+      { icon: '⚙️',  label: `Agent config created`, detail: ai.agent_config ? '✨ AI-powered' : '🔧 Rule-based' },
+      { icon: '📋',  label: `30-day checklist generated`, detail: ai.checklist ? '✨ AI-powered' : '📄 Template' },
+      { icon: '🔔',  label: `Discord notification`, detail: json.discord_sent ? '✅ Sent' : '⚠️ No webhook configured' },
+    ];
+
+    document.getElementById('step-list').innerHTML = steps.map(s =>
+      `<div class="step-row"><span class="step-icon">${s.icon}</span><span>${s.label}</span><span style="color:var(--muted);font-size:.82rem;margin-left:auto;">${s.detail}</span></div>`
+    ).join('');
+
+    document.getElementById('detail-link').href = `/client/${json.client_id}`;
+  } catch (err) {
+    progress.style.display = 'none';
+    btn.style.display = 'block';
+    alert('Error: ' + err.message);
+  }
+});
+
+function resetForm() {
+  document.getElementById('intake-form').reset();
+  document.getElementById('result-panel').style.display = 'none';
+  document.getElementById('form-submit-row').style.display = 'block';
+}
+</script>
+{% endif %}
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     DASHBOARD
+═══════════════════════════════════════════════════════════════════ -->
+{% if page == 'dashboard' %}
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1>Client Dashboard</h1>
+    <p class="subtitle" style="margin-bottom:0;">{{ clients|length }} onboarded client{% if clients|length != 1 %}s{% endif %}</p>
+  </div>
+  <div style="display:flex; gap:.75rem;">
+    <button onclick="seedDemos(this)" class="btn btn-muted">🌱 Seed Demo Data</button>
+    <a href="/" class="btn btn-primary">+ New Client</a>
+  </div>
+</div>
+
+{% if clients %}
+<div class="card" style="padding: 0; overflow: hidden;">
+  <table>
+    <thead>
+      <tr>
+        <th>Company</th>
+        <th>Contact</th>
+        <th>Industry</th>
+        <th>Use Case</th>
+        <th>Channel</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in clients %}
+      <tr>
+        <td><a href="/client/{{ c.id }}" class="link" style="font-weight:600;">{{ c.company_name }}</a></td>
+        <td>{{ c.contact_name }}</td>
+        <td><span class="pill pill-blue">{{ c.industry }}</span></td>
+        <td style="max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ c.use_case }}">{{ c.use_case }}</td>
+        <td>{{ c.comms_channel }}</td>
+        <td style="color: var(--muted); font-size: .8rem;">{{ c.created_at[:10] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="icon">📭</div>
+  <p style="font-size: 1rem; margin-bottom: .5rem;">No clients yet.</p>
+  <p><a href="/" class="link">Onboard your first client</a> or <button onclick="seedDemos(this)" class="btn btn-muted" style="font-size:.85rem;">seed demo data</button></p>
+</div>
+{% endif %}
+
+<script>
+async function seedDemos(btn) {
+  btn.disabled = true;
+  btn.textContent = '⏳ Seeding…';
+  const r = await fetch('/api/seed', { method: 'POST' });
+  const j = await r.json();
+  location.reload();
+}
+</script>
+{% endif %}
+
+
+<!-- ══════════════════════════════════════════════════════════════════
+     CLIENT DETAIL
+═══════════════════════════════════════════════════════════════════ -->
+{% if page == 'detail' %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="/dashboard" style="color:var(--muted); text-decoration:none; font-size:.85rem;">← Dashboard</a>
+</div>
+
+<div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+  <div>
+    <h1>{{ client.company_name }}</h1>
+    <p class="subtitle" style="margin-bottom:.5rem;">{{ client.contact_name }} · {{ client.email }}</p>
+    <span class="pill pill-green">{{ client.status }}</span>
+    <span class="pill pill-blue" style="margin-left:.4rem;">{{ client.industry }}</span>
+  </div>
+  <div style="text-align:right; color:var(--muted); font-size:.82rem;">
+    ID: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;">{{ client.id }}</code><br>
+    Onboarded: {{ client.created_at[:10] }}
+  </div>
+</div>
+
+<!-- Meta grid -->
+<div class="meta-grid" style="margin-bottom: 1.5rem;">
+  <div class="meta-item">
+    <div class="meta-label">Use Case</div>
+    <div class="meta-value">{{ client.use_case }}</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">Team Size</div>
+    <div class="meta-value">{{ client.team_size }}</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">Comms Channel</div>
+    <div class="meta-value">{{ client.comms_channel }}</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">Tech Stack</div>
+    <div class="meta-value">{{ client.tech_stack or '—' }}</div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-title">Goals</div>
+  <p style="font-size: .9rem; line-height: 1.6;">{{ client.goals }}</p>
+</div>
+
+<!-- Documents -->
+<h2>Generated Documents</h2>
+
+<div class="doc-tabs">
+  <button class="tab-btn active" onclick="showTab('welcome')">✉️ Welcome Letter</button>
+  <button class="tab-btn" onclick="showTab('config')">⚙️ Agent Config</button>
+  <button class="tab-btn" onclick="showTab('checklist')">📋 30-Day Checklist</button>
+</div>
+
+<!-- Welcome Letter -->
+<div id="tab-welcome" class="tab-pane active card">
+  {% if docs.welcome_letter %}
+  <pre>{{ docs.welcome_letter }}</pre>
+  {% else %}
+  <p style="color:var(--muted);">No welcome letter generated yet.</p>
+  {% endif %}
+</div>
+
+<!-- Agent Config -->
+<div id="tab-config" class="tab-pane card" style="display:none;">
+  {% if docs.agent_config_parsed %}
+  {% set cfg = docs.agent_config_parsed %}
+  <div class="config-section">
+    <div class="config-key">Agent</div>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-label">Name</div><code class="config-val">{{ cfg.agent.name }}</code></div>
+      <div class="meta-item"><div class="meta-label">Model</div><div class="config-val">{{ cfg.agent.model }}</div></div>
+      <div class="meta-item"><div class="meta-label">Channel</div><div class="config-val">{{ cfg.agent.channel }}</div></div>
+      <div class="meta-item"><div class="meta-label">Memory</div><div class="config-val">{{ 'Enabled' if cfg.agent.memory_enabled else 'Disabled' }}</div></div>
+    </div>
+  </div>
+
+  {% if cfg.skills %}
+  <div class="config-section">
+    <div class="config-key">Skills to Enable</div>
+    <div class="tag-list">
+      {% for s in cfg.skills %}<span class="tag">{{ s }}</span>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if cfg.cron_jobs %}
+  <div class="config-section">
+    <div class="config-key">Cron Jobs</div>
+    {% for job in cfg.cron_jobs %}
+    <div class="cron-item">
+      <div class="cron-schedule">{{ job.schedule }}</div>
+      <div style="margin-top:.3rem;">{{ job.task }}</div>
+      <div style="font-size:.78rem; color:var(--muted); margin-top:.2rem;">→ {{ job.output_channel }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if cfg.notes %}
+  <div class="config-section">
+    <div class="config-key">Implementation Notes</div>
+    <p style="font-size:.88rem; color:var(--muted);">{{ cfg.notes }}</p>
+  </div>
+  {% endif %}
+
+  <div class="config-section" style="margin-top:1rem;">
+    <div class="config-key">Raw JSON</div>
+    <pre>{{ docs.agent_config }}</pre>
+  </div>
+
+  {% else %}
+  <pre>{{ docs.agent_config or 'No config generated.' }}</pre>
+  {% endif %}
+</div>
+
+<!-- Checklist -->
+<div id="tab-checklist" class="tab-pane card" style="display:none;">
+  {% if docs.checklist %}
+  <pre>{{ docs.checklist }}</pre>
+  {% else %}
+  <p style="color:var(--muted);">No checklist generated yet.</p>
+  {% endif %}
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  event.target.classList.add('active');
+}
+</script>
+{% endif %}
+
+</main>
+</body>
+</html>

@@ -61,5 +61,14 @@
     "status": "working",
     "takeaway": "The context block is the product. The memory store is plumbing, the semantic search is routing — what matters is the formatted [MEMORY CONTEXT] block that lands in the LLM prompt. TF-IDF from scratch (no sklearn) works well for factual memories and signals math comfort. The injected_prompt field in the API response is the killer teaching feature: it makes the invisible visible. The openclaw_agent.py bridge (Python function → OpenClaw tool call mapping) is the pattern that should appear in every Forge build going forward.",
     "folder": "/workspace/forge/2026-03-08-persistent-memory/"
+  },
+  {
+    "date": "2026-03-09",
+    "name": "Intake — AI-Powered Client Onboarding Automation",
+    "description": "Intake form triggers a three-document generation pipeline (welcome letter, agent config, 30-day checklist) via Claude Haiku with deterministic template/rule-based fallbacks. SQLite client registry with Flask dashboard. Discord webhook notification. openclaw_agent.py bridge maps every step to OpenClaw tool calls.",
+    "category": "Client onboarding automation",
+    "status": "working",
+    "takeaway": "Config generation is the second-order capability: when an intake form produces a recommended agent_config.json (with skills, cron jobs, integrations), the system is configuring future AI systems — not just processing data. The openclaw_agent.py bridge (sessions_spawn + write + message = full onboarding pipeline) is the direct translation layer that proves OpenClaw implementation fluency. Rule-based skill selection via keyword matching outperforms prompting for small fixed-vocabulary outputs (10 skills) on latency and cost.",
+    "folder": "/workspace/forge/2026-03-09-client-onboarding/"
   }
 ]
