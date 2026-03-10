@@ -70,5 +70,14 @@
     "status": "working",
     "takeaway": "Config generation is the second-order capability: when an intake form produces a recommended agent_config.json (with skills, cron jobs, integrations), the system is configuring future AI systems — not just processing data. The openclaw_agent.py bridge (sessions_spawn + write + message = full onboarding pipeline) is the direct translation layer that proves OpenClaw implementation fluency. Rule-based skill selection via keyword matching outperforms prompting for small fixed-vocabulary outputs (10 skills) on latency and cost.",
     "folder": "/workspace/forge/2026-03-09-client-onboarding/"
+  },
+  {
+    "date": "2026-03-10",
+    "name": "Beacon — Scheduled AI Intelligence Report Pipeline",
+    "description": "Multi-source collection (HN API + 6 RSS feeds + GitHub Trending) → stateful dedup (SQLite url_hash) → TF-IDF relevance scoring vs tracked topics → Claude synthesis (template fallback) → Markdown render → Discord embed delivery. Flask REST API + dark-mode dashboard with topic management, run history, and article score visualization.",
+    "category": "Scheduled intelligence report",
+    "status": "working",
+    "takeaway": "The relevance score is the product, not the articles. A raw RSS aggregator is a commodity; the pipeline's value is answering 'what actually moved the needle on my topics today?' The stateful dedup layer is what elevates this from periodic fetch to scheduled intelligence — the system gets smarter over time, only surfacing genuinely new signals. The openclaw_agent.py bridge (collect → memory_search for dedup, web_fetch for feeds, sessions_spawn for synthesis, message for delivery) is the full OpenClaw orchestration pattern in one file.",
+    "folder": "/workspace/forge/2026-03-10-intelligence-report/"
   }
 ]

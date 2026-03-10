@@ -1,0 +1,14 @@
+# Beacon — Dependencies
+# All stdlib except Flask for the dashboard server.
+# No external NLP/ML libraries required — TF-IDF scoring is implemented from scratch.
+
+flask>=3.0.0          # Dashboard web server (optional — server.py uses stdlib HTTPServer as fallback)
+
+# Optional (auto-detected at runtime):
+# anthropic            — AI synthesis (falls back to template if absent)
+
+# NOT required (all implemented with stdlib):
+# requests             — uses urllib.request
+# beautifulsoup4       — uses xml.etree for RSS, regex for HTML scraping  
+# scikit-learn         — TF-IDF implemented from scratch
+# sqlalchemy           — uses sqlite3 directly

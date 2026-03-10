@@ -1,0 +1,57 @@
+# Beacon — OpenClaw Cron Configuration
+# =======================================
+# Drop this into your OpenClaw config directory to schedule the pipeline.
+#
+# Usage:
+#   Daily 7am report with Discord delivery
+#   Weekly Sunday digest (all 7 days of signals)
+#
+# Environment variables required:
+#   ANTHROPIC_API_KEY        — optional, enables AI synthesis (template fallback if missing)
+#   BEACON_DISCORD_WEBHOOK   — optional, enables Discord delivery
+#
+# To enable: copy to ~/.openclaw/crons/ or reference from openclaw.json
+
+jobs:
+  - name: beacon-daily-brief
+    description: "Beacon daily AI intelligence report — collect, score, synthesize, deliver"
+    schedule: "0 7 * * *"         # Every day at 7:00 AM
+    task: |
+      Run the Beacon intelligence pipeline for today's briefing.
+
+      Steps:
+        1. Execute: cd /path/to/forge/2026-03-10-intelligence-report/beacon && python pipeline.py --deliver
+        2. The pipeline will:
+           - Fetch top HN stories, RSS feeds from TechCrunch/VentureBeat/MIT TR, GitHub Trending
+           - Deduplicate against previously seen articles
+           - Score articles by relevance to tracked topics
+           - Synthesize a structured brief (Claude if key present, template fallback otherwise)
+           - Save report to SQLite database
+           - Deliver Discord embed via BEACON_DISCORD_WEBHOOK
+        3. Report completion status to the #agent-logs channel
+
+      On error: notify Discord and set run status to 'failed' in the DB.
+    env:
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      BEACON_DISCORD_WEBHOOK: "${BEACON_DISCORD_WEBHOOK}"
+    timeout_minutes: 10
+
+  - name: beacon-weekly-digest
+    description: "Beacon weekly digest — top signals across the past 7 days"
+    schedule: "0 9 * * 0"         # Every Sunday at 9:00 AM
+    task: |
+      Generate a Beacon weekly digest by querying the last 7 days of runs.
+
+      Steps:
+        1. Query: SELECT * FROM runs WHERE started_at > (now - 7 days) AND status='complete'
+        2. Merge all top_signals from each run's report_json
+        3. Re-rank by score and occurrence frequency
+        4. Synthesize a "Week in Review" brief
+        5. Deliver to Discord as a weekly digest message
+
+      This is the "temporal aggregation" pattern:
+      individual daily runs become a weekly trend analysis.
+    env:
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      BEACON_DISCORD_WEBHOOK: "${BEACON_DISCORD_WEBHOOK}"
+    timeout_minutes: 15

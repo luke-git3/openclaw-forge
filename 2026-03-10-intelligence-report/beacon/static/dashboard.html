@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔭 Beacon Intelligence Dashboard</title>
+<style>
+  :root {
+    --bg:       #0d1117;
+    --bg2:      #161b22;
+    --bg3:      #21262d;
+    --border:   #30363d;
+    --text:     #e6edf3;
+    --muted:    #8b949e;
+    --accent:   #58a6ff;
+    --green:    #3fb950;
+    --yellow:   #d29922;
+    --red:      #f85149;
+    --purple:   #bc8cff;
+    --radius:   8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; }
+
+  header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header .badge { background: var(--accent); color: #000; font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase; }
+
+  .layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; min-height: calc(100vh - 57px); }
+
+  /* Sidebar */
+  .sidebar { background: var(--bg2); border-right: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+  .sidebar h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+  .stat-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+  .stat-card .val { font-size: 24px; font-weight: 700; color: var(--accent); }
+  .stat-card .lbl { font-size: 11px; color: var(--muted); }
+
+  .btn { display: block; width: 100%; padding: 10px 14px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 13px; font-weight: 600; text-align: center; transition: opacity .15s; }
+  .btn:hover { opacity: .85; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-danger  { background: var(--red);    color: #fff; }
+  .btn-sm { padding: 4px 10px; font-size: 11px; width: auto; display: inline-block; }
+
+  /* Runs list */
+  .run-item { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: pointer; margin-bottom: 6px; transition: border-color .15s; }
+  .run-item:hover, .run-item.active { border-color: var(--accent); }
+  .run-item .run-date { font-size: 12px; color: var(--muted); }
+  .run-item .run-status { float: right; font-size: 11px; }
+  .status-complete { color: var(--green); }
+  .status-running  { color: var(--yellow); }
+  .status-failed   { color: var(--red); }
+
+  /* Main content */
+  .main { padding: 24px; overflow-y: auto; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .tab { padding: 8px 16px; border-radius: var(--radius) var(--radius) 0 0; cursor: pointer; color: var(--muted); font-size: 13px; }
+  .tab.active { background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-bottom-color: var(--bg); margin-bottom: -1px; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Report render */
+  .report-md { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; line-height: 1.7; max-width: 860px; }
+  .report-md h1 { font-size: 20px; margin-bottom: 12px; color: var(--accent); }
+  .report-md h2 { font-size: 15px; margin: 20px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .report-md p  { color: var(--muted); margin-bottom: 12px; }
+  .report-md a  { color: var(--accent); text-decoration: none; }
+  .report-md a:hover { text-decoration: underline; }
+  .report-md ul { padding-left: 20px; }
+  .report-md li { margin-bottom: 6px; }
+  .report-md strong { color: var(--text); }
+  .report-md em    { color: var(--muted); font-style: normal; }
+  .report-md hr   { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .report-md code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+
+  /* Topics */
+  .topic-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .topic-tag  { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+  .topic-tag.inactive { opacity: .4; }
+  .topic-del { background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+  .topic-form { display: flex; gap: 8px; margin-top: 12px; }
+  .topic-form input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; color: var(--text); font-size: 13px; }
+  .topic-form input:focus { outline: none; border-color: var(--accent); }
+
+  /* Articles table */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; }
+  td { font-size: 13px; }
+  tr:hover td { background: var(--bg3); }
+  .score-bar { height: 4px; background: var(--border); border-radius: 2px; width: 80px; }
+  .score-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty p { max-width: 320px; margin: 0 auto; line-height: 1.6; }
+
+  /* Loader */
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 18px; font-size: 13px; z-index: 999; opacity: 0; transition: opacity .3s; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <span style="font-size:24px">🔭</span>
+  <h1>Beacon Intelligence</h1>
+  <span class="badge">OpenClaw Demo</span>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <span id="hdr-stats" style="color:var(--muted);font-size:12px">Loading…</span>
+    <div class="spinner" id="hdr-spinner" style="display:none"></div>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div>
+      <h3>Pipeline Stats</h3>
+      <div class="stat-card" style="margin-bottom:8px">
+        <div class="val" id="stat-runs">—</div>
+        <div class="lbl">Total runs</div>
+      </div>
+      <div class="stat-card" style="margin-bottom:8px">
+        <div class="val" id="stat-articles">—</div>
+        <div class="lbl">Articles indexed</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" id="stat-topics">—</div>
+        <div class="lbl">Topics tracked</div>
+      </div>
+    </div>
+
+    <div>
+      <h3>Actions</h3>
+      <button class="btn btn-primary" id="btn-run">▶ Run Now</button>
+      <div style="height:6px"></div>
+      <button class="btn btn-primary" style="background:var(--purple)" id="btn-run-deliver">▶ Run + Deliver</button>
+    </div>
+
+    <div style="flex:1;overflow-y:auto">
+      <h3>Recent Runs</h3>
+      <div id="runs-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="tabs">
+      <div class="tab active" data-tab="report">📄 Latest Report</div>
+      <div class="tab" data-tab="topics">🏷 Topics</div>
+      <div class="tab" data-tab="articles">📰 Top Articles</div>
+    </div>
+
+    <div class="tab-content active" id="tab-report">
+      <div id="report-area">
+        <div class="empty">
+          <div class="icon">🔭</div>
+          <p>No reports yet. Click <strong>Run Now</strong> to generate the first intelligence brief.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-topics">
+      <h2 style="margin-bottom:16px;font-size:15px">Tracked Topics</h2>
+      <p style="color:var(--muted);margin-bottom:16px;font-size:13px">
+        Articles are scored by relevance to these terms. Add topics that matter to you.
+      </p>
+      <div class="topic-list" id="topic-list"><div class="spinner"></div></div>
+      <div class="topic-form">
+        <input type="text" id="topic-input" placeholder="Add new topic (e.g. RAG pipelines)" />
+        <button class="btn btn-primary btn-sm" id="btn-add-topic">Add</button>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-articles">
+      <h2 style="margin-bottom:16px;font-size:15px">Top Articles (All Time)</h2>
+      <table>
+        <thead><tr>
+          <th>Title</th><th>Source</th><th>Score</th><th>Topics</th>
+        </tr></thead>
+        <tbody id="articles-tbody"><tr><td colspan="4" style="color:var(--muted)">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+
+function toast(msg, duration=3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+async function api(path, opts={}) {
+  const resp = await fetch(API + path, opts);
+  return resp.json().catch(() => ({}));
+}
+
+// ── Markdown renderer (minimal) ───────────────────────────────────────────────
+function renderMarkdown(md) {
+  if (!md) return '<p style="color:var(--muted)">No report content.</p>';
+  let html = md
+    // headers
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    // bold + italic inline
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    // links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+    // hr
+    .replace(/^---+$/gm, '<hr>')
+    // lists
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    // wrap consecutive li in ul
+    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    // paragraphs: double newline
+    .replace(/\n\n/g, '</p><p>')
+    // single newlines become <br> inside paragraphs
+    .replace(/\n/g, '<br>');
+  return `<div class="report-md"><p>${html}</p></div>`;
+}
+
+// ── Status / stats ────────────────────────────────────────────────────────────
+async function loadStatus() {
+  const s = await api('/api/status');
+  document.getElementById('stat-runs').textContent =
+    s.last_run ? s.last_run.id : '0';
+  document.getElementById('stat-articles').textContent =
+    s.article_count ?? '0';
+  document.getElementById('stat-topics').textContent =
+    s.topic_count ?? '0';
+
+  if (s.last_run) {
+    const lr = s.last_run;
+    const date = lr.started_at ? lr.started_at.slice(0,10) : '';
+    document.getElementById('hdr-stats').textContent =
+      `Last run: ${date} | ${lr.articles_surfaced ?? 0} articles surfaced`;
+  } else {
+    document.getElementById('hdr-stats').textContent = 'No runs yet';
+  }
+}
+
+// ── Runs list ─────────────────────────────────────────────────────────────────
+let activeRunId = null;
+
+async function loadRuns() {
+  const runs = await api('/api/runs');
+  const list = document.getElementById('runs-list');
+  if (!runs.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:12px">No runs yet.</p>';
+    return;
+  }
+  list.innerHTML = runs.map(r => `
+    <div class="run-item ${r.id === activeRunId ? 'active' : ''}" data-id="${r.id}">
+      <strong>#${r.id}</strong> — ${r.started_at ? r.started_at.slice(0,10) : '?'}
+      <span class="run-status status-${r.status}">${r.status === 'complete' ? '✓' : r.status === 'running' ? '⟳' : '✗'} ${r.status}</span>
+      <div class="run-date">${r.articles_surfaced ?? 0} surfaced</div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.run-item').forEach(el => {
+    el.addEventListener('click', () => loadReport(+el.dataset.id));
+  });
+}
+
+// ── Report viewer ─────────────────────────────────────────────────────────────
+async function loadReport(runId) {
+  activeRunId = runId;
+  loadRuns();
+  const area = document.getElementById('report-area');
+  area.innerHTML = '<div class="spinner" style="margin:40px auto;display:block;width:32px;height:32px;border-width:3px"></div>';
+
+  const data = await api(`/api/runs/${runId}`);
+  if (data.error) {
+    area.innerHTML = `<div class="empty"><p>${data.error}</p></div>`;
+    return;
+  }
+
+  area.innerHTML = renderMarkdown(data.report_md);
+}
+
+async function loadLatestReport() {
+  const runs = await api('/api/runs');
+  if (runs.length) loadReport(runs[0].id);
+}
+
+// ── Topics ────────────────────────────────────────────────────────────────────
+async function loadTopics() {
+  const topics = await api('/api/topics');
+  const list   = document.getElementById('topic-list');
+  if (!topics.length) {
+    list.innerHTML = '<p style="color:var(--muted)">No topics yet.</p>';
+    return;
+  }
+  list.innerHTML = topics.map(t => `
+    <span class="topic-tag ${t.active ? '' : 'inactive'}">
+      ${t.term}
+      <button class="topic-del" data-id="${t.id}" title="Delete">×</button>
+    </span>
+  `).join('');
+
+  list.querySelectorAll('.topic-del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await api(`/api/topics/${btn.dataset.id}`, { method: 'DELETE' });
+      loadTopics();
+      loadStatus();
+      toast('Topic removed');
+    });
+  });
+}
+
+document.getElementById('btn-add-topic').addEventListener('click', async () => {
+  const inp  = document.getElementById('topic-input');
+  const term = inp.value.trim();
+  if (!term) return;
+  const res = await api('/api/topics', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({term})
+  });
+  if (res.error) { toast('⚠ ' + res.error); return; }
+  inp.value = '';
+  loadTopics();
+  loadStatus();
+  toast('Topic added: ' + term);
+});
+
+document.getElementById('topic-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-add-topic').click();
+});
+
+// ── Top Articles ───────────────────────────────────────────────────────────────
+async function loadArticles() {
+  const articles = await api('/api/articles/top');
+  const tbody    = document.getElementById('articles-tbody');
+  if (!articles.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">No articles yet. Run the pipeline first.</td></tr>';
+    return;
+  }
+  const maxScore = Math.max(...articles.map(a => a.score || 0), 0.01);
+  tbody.innerHTML = articles.map(a => {
+    const pct = Math.round((a.score / maxScore) * 100);
+    const topics = a.matched_topics ? JSON.parse(a.matched_topics).slice(0,3).join(', ') : '';
+    return `
+      <tr>
+        <td><a href="${a.url}" target="_blank" style="color:var(--accent)">${a.title.slice(0,70)}${a.title.length>70?'…':''}</a></td>
+        <td style="color:var(--muted)">${a.source}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="score-bar"><div class="score-fill" style="width:${pct}%"></div></div>
+            <span style="color:var(--muted);font-size:11px">${(a.score||0).toFixed(3)}</span>
+          </div>
+        </td>
+        <td style="color:var(--muted);font-size:12px">${topics}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── Run pipeline ───────────────────────────────────────────────────────────────
+async function triggerRun(deliver=false) {
+  const spinner = document.getElementById('hdr-spinner');
+  spinner.style.display = 'inline-block';
+  toast('Pipeline started… this takes 30-60 seconds');
+
+  await api('/api/run', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({deliver})
+  });
+
+  // Poll until run finishes
+  let attempts = 0;
+  const poll = setInterval(async () => {
+    attempts++;
+    const runs = await api('/api/runs');
+    const latest = runs[0];
+    if (!latest) return;
+    if (latest.status !== 'running' || attempts > 90) {
+      clearInterval(poll);
+      spinner.style.display = 'none';
+      await loadStatus();
+      await loadRuns();
+      await loadLatestReport();
+      await loadArticles();
+      toast(latest.status === 'complete' ? '✅ Report ready!' : '⚠ Run finished with status: ' + latest.status);
+    }
+  }, 2000);
+}
+
+document.getElementById('btn-run').addEventListener('click', () => triggerRun(false));
+document.getElementById('btn-run-deliver').addEventListener('click', () => triggerRun(true));
+
+// ── Tabs ───────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+(async () => {
+  await Promise.all([loadStatus(), loadRuns(), loadTopics(), loadArticles()]);
+  await loadLatestReport();
+})();
+</script>
+</body>
+</html>
