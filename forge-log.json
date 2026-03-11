@@ -79,5 +79,14 @@
     "status": "working",
     "takeaway": "The relevance score is the product, not the articles. A raw RSS aggregator is a commodity; the pipeline's value is answering 'what actually moved the needle on my topics today?' The stateful dedup layer is what elevates this from periodic fetch to scheduled intelligence — the system gets smarter over time, only surfacing genuinely new signals. The openclaw_agent.py bridge (collect → memory_search for dedup, web_fetch for feeds, sessions_spawn for synthesis, message for delivery) is the full OpenClaw orchestration pattern in one file.",
     "folder": "/workspace/forge/2026-03-10-intelligence-report/"
+  },
+  {
+    "date": "2026-03-11",
+    "name": "Nexus — AI-Powered End-to-End Automation Pipeline",
+    "description": "Webhook trigger → AI classify (urgency 1-5) → AI decide (LOG/ALERT/ESCALATE) → conditional action (Markdown report + Discord embed + sub-agent spawn) → full SQLite audit trail. Dark-mode dashboard with live run inspector and fire-trigger form. Rule-based fallback when no API key present.",
+    "category": "End-to-end automation pipeline",
+    "status": "working",
+    "takeaway": "AI-as-decision-gate is the pattern: LLM structured output (LOG/ALERT/ESCALATE + confidence) directly controls program flow — not just 'AI generates text' but 'AI output routes execution'. The dual-mode architecture (Claude Haiku → deterministic fallback) is the production standard. The openclaw_agent.py bridge (write + message + sessions_spawn sequence) maps the entire pipeline to native tool calls, making this both a standalone demo and a blueprint for a live OpenClaw skill. Build #10 completes the first full rotation of all 10 portfolio categories with 0 failed builds.",
+    "folder": "/workspace/forge/2026-03-11-automation-pipeline/"
   }
 ]

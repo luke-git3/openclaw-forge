@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nexus — Automation Pipeline</title>
+<style>
+  :root {
+    --bg:      #0d1117;
+    --surface: #161b22;
+    --border:  #30363d;
+    --text:    #e6edf3;
+    --muted:   #8b949e;
+    --accent:  #58a6ff;
+    --green:   #3fb950;
+    --amber:   #d29922;
+    --red:     #f85149;
+    --purple:  #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 18px; font-weight: 700; }
+  header span { color: var(--muted); font-size: 13px; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  .layout { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 57px); }
+
+  /* Sidebar */
+  .sidebar { border-right: 1px solid var(--border); overflow-y: auto; padding: 16px 0; }
+  .stat-card { margin: 0 12px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 4px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; }
+  .run-list { margin-top: 12px; }
+  .run-item { padding: 10px 16px; cursor: pointer; border-left: 3px solid transparent; transition: background .15s; }
+  .run-item:hover { background: var(--surface); }
+  .run-item.selected { border-left-color: var(--accent); background: var(--surface); }
+  .run-item .run-id { font-family: monospace; font-size: 12px; color: var(--accent); }
+  .run-item .run-meta { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-LOG      { background:#1a2e1a; color: var(--green); }
+  .badge-ALERT    { background:#2e2514; color: var(--amber); }
+  .badge-ESCALATE { background:#2e1414; color: var(--red); }
+  .badge-queued   { background:#1a1f2e; color: var(--accent); }
+  .badge-failed   { background:#2e1414; color: var(--red); }
+
+  /* Detail pane */
+  .detail { overflow-y: auto; padding: 24px; }
+  .detail h2 { font-size: 16px; margin-bottom: 16px; }
+  .empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-size: 15px; }
+
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .section h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 12px; }
+  .kv-grid { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; }
+  .kv-key   { color: var(--muted); font-size: 12px; }
+  .kv-val   { font-size: 13px; }
+  .kv-val.mono { font-family: monospace; font-size: 12px; color: var(--accent); }
+
+  .stage-list { display: flex; flex-direction: column; gap: 6px; }
+  .stage { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
+  .stage-icon { width: 20px; text-align: center; }
+  .stage-name { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; width: 90px; }
+  .stage-time { color: var(--muted); font-size: 11px; margin-left: auto; }
+
+  pre { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; color: #b5cea8; }
+
+  /* Trigger form */
+  .trigger-form { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .trigger-form h3 { font-size: 12px; text-transform: uppercase; letter-spacing:.06em; color: var(--muted); margin-bottom: 12px; }
+  textarea { width: 100%; height: 100px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-family: monospace; font-size: 12px; resize: vertical; }
+  button { background: var(--accent); color: #000; border: none; border-radius: 6px; padding: 8px 18px; cursor: pointer; font-weight: 600; font-size: 13px; margin-top: 8px; }
+  button:hover { opacity: .85; }
+  .fire-status { font-size: 12px; color: var(--muted); margin-top: 6px; height: 18px; }
+
+  .urgency-bar { display: flex; gap: 3px; align-items: center; }
+  .urgency-pip { width: 14px; height: 6px; border-radius: 2px; }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { height: 200px; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="live-dot"></div>
+  <h1>⚡ Nexus</h1>
+  <span>End-to-End Automation Pipeline</span>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebar: stats + run list -->
+  <div class="sidebar" id="sidebar">
+    <div style="padding:0 12px 8px; display:flex; gap:8px;">
+      <div class="stat-card" style="flex:1">
+        <div class="label">Total Runs</div>
+        <div class="value" id="stat-total">—</div>
+      </div>
+    </div>
+    <div style="padding:0 12px 12px; display:flex; gap:8px;">
+      <div class="stat-card" style="flex:1; border-color:#1a2e1a">
+        <div class="label" style="color:var(--green)">LOG</div>
+        <div class="value" id="stat-log" style="color:var(--green)">—</div>
+      </div>
+      <div class="stat-card" style="flex:1; border-color:#2e2514">
+        <div class="label" style="color:var(--amber)">ALERT</div>
+        <div class="value" id="stat-alert" style="color:var(--amber)">—</div>
+      </div>
+      <div class="stat-card" style="flex:1; border-color:#2e1414">
+        <div class="label" style="color:var(--red)">ESC</div>
+        <div class="value" id="stat-escalate" style="color:var(--red)">—</div>
+      </div>
+    </div>
+    <div class="run-list" id="run-list"></div>
+  </div>
+
+  <!-- Detail pane -->
+  <div class="detail" id="detail">
+
+    <!-- Fire trigger form at the top -->
+    <div class="trigger-form">
+      <h3>🔥 Fire a Test Trigger</h3>
+      <textarea id="trigger-payload">{
+  "event_type": "price_alert",
+  "source": "market-data",
+  "ticker": "NVDA",
+  "change_pct": -4.7,
+  "message": "NVDA dropped 4.7% breaching the alert threshold."
+}</textarea>
+      <br/>
+      <button onclick="fireTrigger()">Send to Pipeline</button>
+      <div class="fire-status" id="fire-status"></div>
+    </div>
+
+    <div class="empty" id="empty-state">← Select a run to inspect it</div>
+    <div id="run-detail" style="display:none"></div>
+
+  </div>
+</div>
+
+<script>
+  let selectedRunId = null;
+  let autoRefresh   = null;
+
+  // ── Data fetching ────────────────────────────────────────────────────────────
+
+  async function fetchJSON(url) {
+    const r = await fetch(url);
+    return r.json();
+  }
+
+  async function refreshAll() {
+    const [stats, runs] = await Promise.all([
+      fetchJSON('/stats'),
+      fetchJSON('/runs?limit=30'),
+    ]);
+    renderStats(stats);
+    renderRunList(runs);
+    if (selectedRunId) {
+      const run = await fetchJSON(`/run/${selectedRunId}`);
+      renderDetail(run);
+    }
+  }
+
+  // ── Render helpers ──────────────────────────────────────────────────────────
+
+  function renderStats(s) {
+    document.getElementById('stat-total').textContent     = s.total ?? 0;
+    document.getElementById('stat-log').textContent       = (s.by_action||{}).LOG      ?? 0;
+    document.getElementById('stat-alert').textContent     = (s.by_action||{}).ALERT    ?? 0;
+    document.getElementById('stat-escalate').textContent  = (s.by_action||{}).ESCALATE ?? 0;
+  }
+
+  function renderRunList(runs) {
+    const el = document.getElementById('run-list');
+    if (!runs.length) { el.innerHTML = '<div style="padding:16px;color:var(--muted);font-size:12px;">No runs yet — fire a trigger!</div>'; return; }
+    el.innerHTML = runs.map(r => {
+      const action  = r.action || r.status || 'queued';
+      const bClass  = r.action ? `badge-${r.action}` : 'badge-queued';
+      const elapsed = r.elapsed_ms ? `${r.elapsed_ms}ms` : '';
+      const ts      = (r.received_at||'').slice(11,19);
+      return `<div class="run-item${r.run_id===selectedRunId?' selected':''}" onclick="selectRun('${r.run_id}')">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="run-id">${r.run_id}</span>
+          <span class="badge ${bClass}">${action}</span>
+        </div>
+        <div class="run-meta">${ts} UTC  ${elapsed ? '• '+elapsed : ''}</div>
+        <div class="run-meta" style="margin-top:2px;font-size:11px;color:var(--text);opacity:.7">${(r.summary||'').slice(0,55)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  async function selectRun(id) {
+    selectedRunId = id;
+    const run = await fetchJSON(`/run/${id}`);
+    document.getElementById('empty-state').style.display  = 'none';
+    document.getElementById('run-detail').style.display   = 'block';
+    renderDetail(run);
+    renderRunList(await fetchJSON('/runs?limit=30'));
+  }
+
+  function renderDetail(r) {
+    const clf = r.classification || {};
+    const dec = r.decision       || {};
+    const act = r.action_result  || {};
+    const stages = r.stages      || [];
+
+    const urgencyBar = urgencyHtml(clf.urgency||0);
+    const actionBadge = r.action
+      ? `<span class="badge badge-${r.action}">${r.action}</span>`
+      : `<span class="badge badge-queued">${r.status}</span>`;
+
+    let html = `
+    <div class="section">
+      <h3>Run Overview</h3>
+      <div class="kv-grid">
+        <div class="kv-key">Run ID</div><div class="kv-val mono">${r.run_id}</div>
+        <div class="kv-key">Status</div><div class="kv-val">${actionBadge}</div>
+        <div class="kv-key">Event Type</div><div class="kv-val">${r.event_type||'?'}</div>
+        <div class="kv-key">Source</div><div class="kv-val">${r.source||'?'}</div>
+        <div class="kv-key">Received</div><div class="kv-val">${(r.received_at||'').replace('T',' ').slice(0,19)} UTC</div>
+        ${r.elapsed_ms ? `<div class="kv-key">Elapsed</div><div class="kv-val">${r.elapsed_ms} ms</div>` : ''}
+      </div>
+    </div>`;
+
+    if (clf.category) { html += `
+    <div class="section">
+      <h3>🤖 AI Classification</h3>
+      <div class="kv-grid">
+        <div class="kv-key">Category</div><div class="kv-val">${clf.category}</div>
+        <div class="kv-key">Urgency</div><div class="kv-val">${urgencyBar}</div>
+        <div class="kv-key">AI Used</div><div class="kv-val">${clf.ai_used ? '✅ Claude' : '⚙️ Rule-based fallback'}</div>
+        <div class="kv-key">Summary</div><div class="kv-val">${clf.summary||''}</div>
+      </div>
+    </div>`; }
+
+    if (dec.action) { html += `
+    <div class="section">
+      <h3>🧠 AI Decision</h3>
+      <div class="kv-grid">
+        <div class="kv-key">Action</div><div class="kv-val"><span class="badge badge-${dec.action}">${dec.action}</span></div>
+        <div class="kv-key">Confidence</div><div class="kv-val">${dec.confidence ? (dec.confidence*100).toFixed(0)+'%' : '?'}</div>
+        <div class="kv-key">Rationale</div><div class="kv-val">${dec.rationale||''}</div>
+        <div class="kv-key">AI Used</div><div class="kv-val">${dec.ai_used ? '✅ Claude' : '⚙️ Rule-based fallback'}</div>
+      </div>
+    </div>`; }
+
+    if (act.action) { html += `
+    <div class="section">
+      <h3>⚡ Action Result</h3>
+      <div class="kv-grid">
+        <div class="kv-key">Action Taken</div><div class="kv-val"><span class="badge badge-${act.action}">${act.action}</span></div>
+        ${act.report ? `<div class="kv-key">Report</div><div class="kv-val mono" style="font-size:11px">${act.report}</div>` : ''}
+        ${act.notify ? `<div class="kv-key">Discord</div><div class="kv-val">${act.notify.sent ? '✅ sent via webhook' : '📄 saved to '+act.notify.detail}</div>` : ''}
+        ${act.subagent ? `<div class="kv-key">Sub-Agent</div><div class="kv-val">🤖 Job queued → ${act.subagent.job_file||''}</div>` : ''}
+        ${act.note ? `<div class="kv-key">Note</div><div class="kv-val">${act.note}</div>` : ''}
+      </div>
+    </div>`; }
+
+    if (stages.length) { html += `
+    <div class="section">
+      <h3>📊 Pipeline Stages</h3>
+      <div class="stage-list">${stages.map(s => {
+        const icons = {validate:'🔍',classify:'🏷',decide:'🧠',act:'⚡',finalise:'✅'};
+        return `<div class="stage">
+          <div class="stage-icon">${icons[s.stage]||'•'}</div>
+          <div class="stage-name">${s.stage}</div>
+          <div class="stage-time">${(s.finished_at||'').slice(11,19)} UTC</div>
+        </div>`;
+      }).join('')}</div>
+    </div>`; }
+
+    html += `
+    <div class="section">
+      <h3>📦 Raw Payload</h3>
+      <pre>${JSON.stringify(r.payload||{}, null, 2)}</pre>
+    </div>`;
+
+    if (r.error) { html += `
+    <div class="section" style="border-color:var(--red)">
+      <h3 style="color:var(--red)">❌ Error</h3>
+      <pre style="color:var(--red)">${r.traceback||r.error}</pre>
+    </div>`; }
+
+    document.getElementById('run-detail').innerHTML = html;
+  }
+
+  function urgencyHtml(u) {
+    const colors = ['#30363d','#3fb950','#d29922','#f0883e','#f85149'];
+    let bar = '<div class="urgency-bar">';
+    for (let i=1; i<=5; i++) {
+      bar += `<div class="urgency-pip" style="background:${i<=u ? colors[u-1] : '#30363d'}"></div>`;
+    }
+    bar += ` <span style="margin-left:4px">${u}/5</span></div>`;
+    return bar;
+  }
+
+  // ── Fire trigger ─────────────────────────────────────────────────────────────
+
+  async function fireTrigger() {
+    const raw = document.getElementById('trigger-payload').value;
+    const status = document.getElementById('fire-status');
+    let payload;
+    try { payload = JSON.parse(raw); }
+    catch(e) { status.textContent = '❌ Invalid JSON'; return; }
+
+    status.textContent = '⏳ Sending…';
+    try {
+      const r = await fetch('/trigger', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      status.textContent = `✅ Queued as ${data.run_id}`;
+      setTimeout(() => selectRun(data.run_id), 400);
+    } catch(e) {
+      status.textContent = `❌ ${e.message}`;
+    }
+  }
+
+  // ── Boot ──────────────────────────────────────────────────────────────────────
+
+  refreshAll();
+  setInterval(refreshAll, 3000);   // auto-refresh every 3 s
+</script>
+</body>
+</html>
